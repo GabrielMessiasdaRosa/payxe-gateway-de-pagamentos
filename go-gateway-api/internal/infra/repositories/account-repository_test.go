@@ -1,4 +1,4 @@
-package repository
+package repositories
 
 import (
 	"database/sql"
@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain"
+	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain/domainEntities"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +18,7 @@ func TestAccountRepository_Save(t *testing.T) {
 
 	repo := NewAccountRepository(db)
 
-	account := &domain.Account{
+	account := &domainEntities.AccountDomain{
 		ID:        "1",
 		Name:      "Test User",
 		Email:     "test@example.com",
@@ -46,7 +46,7 @@ func TestAccountRepository_FindByID(t *testing.T) {
 
 	repo := NewAccountRepository(db)
 
-	account := &domain.Account{
+	account := &domainEntities.AccountDomain{
 		ID:        "1",
 		Name:      "Test User",
 		Email:     "test@example.com",
@@ -78,7 +78,7 @@ func TestAccountRepository_FindByAPIKey(t *testing.T) {
 
 	repo := NewAccountRepository(db)
 
-	account := &domain.Account{
+	account := &domainEntities.AccountDomain{
 		ID:        "1",
 		Name:      "Test User",
 		Email:     "test@example.com",
@@ -110,7 +110,7 @@ func TestAccountRepository_UpdateBalance(t *testing.T) {
 
 	repo := NewAccountRepository(db)
 
-	account := &domain.Account{
+	account := &domainEntities.AccountDomain{
 		ID:        "1",
 		Balance:   50.0,
 		UpdatedAt: time.Now(),
@@ -143,7 +143,7 @@ func TestAccountRepository_UpdateBalance_NoRows(t *testing.T) {
 
 	repo := NewAccountRepository(db)
 
-	account := &domain.Account{
+	account := &domainEntities.AccountDomain{
 		ID:        "1",
 		Balance:   50.0,
 		UpdatedAt: time.Now(),
@@ -170,7 +170,7 @@ func TestAccountRepository_UpdateBalance_QueryError(t *testing.T) {
 
 	repo := NewAccountRepository(db)
 
-	account := &domain.Account{
+	account := &domainEntities.AccountDomain{
 		ID:        "1",
 		Balance:   50.0,
 		UpdatedAt: time.Now(),
@@ -197,7 +197,7 @@ func TestAccountRepository_UpdateBalance_ExecError(t *testing.T) {
 
 	repo := NewAccountRepository(db)
 
-	account := &domain.Account{
+	account := &domainEntities.AccountDomain{
 		ID:        "1",
 		Balance:   50.0,
 		UpdatedAt: time.Now(),
@@ -230,7 +230,7 @@ func TestAccountRepository_UpdateBalance_CommitError(t *testing.T) {
 
 	repo := NewAccountRepository(db)
 
-	account := &domain.Account{
+	account := &domainEntities.AccountDomain{
 		ID:        "1",
 		Balance:   50.0,
 		UpdatedAt: time.Now(),

@@ -1,4 +1,4 @@
-package domain
+package domainEntities
 
 import (
 	"crypto/rand"
@@ -10,7 +10,7 @@ import (
 )
 
 
-type Account struct {
+type AccountDomain struct {
 	ID 	 string
 	Name string
 	Email string
@@ -30,8 +30,9 @@ func generateAPIKey() string {
 
 
 // * siginifica um ponteiro
-func NewAccount(name, email string) *Account {
-	account := &Account{
+func NewAccount(name, email string) *AccountDomain {
+
+	account := &AccountDomain{
 		ID: uuid.New().String(),
 		Name: name,
 		Email: email,
@@ -43,7 +44,7 @@ func NewAccount(name, email string) *Account {
 	return account
 }
 
-func (account *Account) AddBalance(amount float64) {
+func (account *AccountDomain) AddBalance(amount float64) {
 	account.mutex.Lock()
 	defer account.mutex.Unlock()
 	account.Balance += amount

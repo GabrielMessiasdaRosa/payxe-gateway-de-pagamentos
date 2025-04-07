@@ -1,6 +1,9 @@
 package dto
 
-import "github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain"
+import "github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain/domainEntities"
+
+
+
 
 type CreateAccountInputDTO struct {
 	Name  string `json:"name" validate:"required"`
@@ -21,11 +24,11 @@ type AccountOutputDTO struct {
 }
 
 
-func ToAccount(input CreateAccountInputDTO) *domain.Account {
-	return domain.NewAccount(input.Name, input.Email)
+func ToAccount(input CreateAccountInputDTO) *domainEntities.AccountDomain {
+	return domainEntities.NewAccount(input.Name, input.Email)
 }
 
-func FromAccount(account *domain.Account) AccountOutputDTO {
+func FromAccount(account *domainEntities.AccountDomain) AccountOutputDTO {
 	return AccountOutputDTO{
 		ID:      account.ID,
 		Name:    account.Name,

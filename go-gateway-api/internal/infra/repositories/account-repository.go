@@ -1,9 +1,9 @@
-package repository
+package repositories
 
 import (
 	"database/sql"
 
-	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain"
+	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain/domainEntities"
 )
 
 type AccountRepository struct {
@@ -15,7 +15,7 @@ func NewAccountRepository(db *sql.DB) *AccountRepository {
 		db: db,
 	}
 }
-func (r *AccountRepository) Save(account *domain.Account) error {
+func (r *AccountRepository) Save(account *domainEntities.AccountDomain) error {
 	stmt, err := r.db.Prepare("INSERT INTO accounts (id, name, email, api_key, balance, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		return err
@@ -29,14 +29,14 @@ func (r *AccountRepository) Save(account *domain.Account) error {
 	return nil
 }
 
-func (r *AccountRepository) FindByID(id string) (*domain.Account, error) {
+func (r *AccountRepository) FindByID(id string) (*domainEntities.AccountDomain, error) {
 	stmt, err := r.db.Prepare("SELECT id, name, email, api_key, balance, created_at, updated_at FROM accounts WHERE id = ?")
 	if err != nil {
 		return nil, err
 	}
 	defer stmt.Close()
 
-	account := &domain.Account{}
+	account := &domainEntities.AccountDomain{}
 	err = stmt.QueryRow(id).Scan(&account.ID, &account.Name, &account.Email, &account.APIKey, &account.Balance, &account.CreatedAt, &account.UpdatedAt)
 	if err != nil {
 		return nil, err
@@ -44,13 +44,13 @@ func (r *AccountRepository) FindByID(id string) (*domain.Account, error) {
 	return account, nil
 }
 
-func (r *AccountRepository) FindByAPIKey(apiKey string) (*domain.Account, error) {
+func (r *AccountRepository) FindByAPIKey(apiKey string) (*domainEntities.AccountDomain, error) {
 	stmt, err := r.db.Prepare("SELECT id, name, email, api_key, balance, created_at, updated_at FROM accounts WHERE api_key = ?")
 	if err != nil {
 		return nil, err
 	}
 	defer stmt.Close()
-	account := &domain.Account{}
+	account := &domainEntities.AccountDomain{}
 	err = stmt.QueryRow(apiKey).Scan(&account.ID, &account.Name, &account.Email, &account.APIKey, &account.Balance, &account.CreatedAt, &account.UpdatedAt)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (r *AccountRepository) FindByAPIKey(apiKey string) (*domain.Account, error)
 	return account, nil
 }
 
-func (r *AccountRepository) UpdateBalance(account *domain.Account) error {
+func (r *AccountRepository) UpdateBalance(account *domainEntities.AccountDomain) error {
 	
 	tx, err := r.db.Begin()
 	if err != nil {
