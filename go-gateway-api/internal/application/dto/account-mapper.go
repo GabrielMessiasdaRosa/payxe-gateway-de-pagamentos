@@ -3,18 +3,6 @@ package dto
 import "github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain/domainEntities"
 
 
-
-
-type CreateAccountInputDTO struct {
-	Name  string `json:"name" validate:"required"`
-	Email string `json:"email" validate:"required,email"`
-}
-
-type UpdateAccountInputDTO struct {
-	Name  *string `json:"name" validate:"omitempty"`
-	Email *string `json:"email" validate:"omitempty,email"`
-}
-
 type AccountOutputDTO struct {
 	ID      string  `json:"id"`
 	Name    string  `json:"name"`
@@ -22,7 +10,6 @@ type AccountOutputDTO struct {
 	Balance float64 `json:"balance"`
 	APIKey  string  `json:"api_key"`
 }
-
 
 func ToAccount(input CreateAccountInputDTO) *domainEntities.AccountDomain {
 	return domainEntities.NewAccount(input.Name, input.Email)
