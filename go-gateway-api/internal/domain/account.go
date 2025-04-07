@@ -43,10 +43,10 @@ func NewAccount(name, email string) *Account {
 	return account
 }
 
-func addBalance(account *Account, amount float64) {
+func (account *Account) AddBalance(amount float64) {
 	account.mutex.Lock()
+	defer account.mutex.Unlock()
 	account.Balance += amount
 	account.UpdatedAt = time.Now()
-	defer account.mutex.Unlock()
 }
 

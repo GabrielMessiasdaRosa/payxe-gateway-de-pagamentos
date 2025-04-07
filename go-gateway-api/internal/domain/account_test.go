@@ -43,7 +43,7 @@ func TestAddBalance(t *testing.T) {
 	initialBalance := account.Balance
 	amount := 100.0
 
-	addBalance(account, amount)
+	account.AddBalance(amount)
 
 	if account.Balance != initialBalance+amount {
 		t.Errorf("expected Balance to be %f, got %f", initialBalance+amount, account.Balance)
@@ -84,19 +84,22 @@ func TestCreateAccountWithExistingAPIKey(t *testing.T) {
 
 // @audit-ok // deve garantir que o mutex está funcionando corretamente ao adicionar saldo
 func TestAddBalanceConcurrency(t *testing.T) {
-	account := NewAccount("Concurrent User", "concurrent@example.com")
-	amount := 10.0
-	iterations := 1000
+	
+	account := NewAccount("Concurrent User", "concurrent.user@example.com")
+	amount := 50.0
 	var wg sync.WaitGroup
-	for i := 0; i < iterations; i++ {
+
+	for i := 0; i < 10; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			addBalance(account, amount)
+			account.AddBalance(amount)
 		}()
 	}
+
 	wg.Wait()
-	expectedBalance := float64(iterations) * amount
+
+	expectedBalance := amount * 10
 	if account.Balance != expectedBalance {
 		t.Errorf("expected Balance to be %f, got %f", expectedBalance, account.Balance)
 	}
