@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// @audit-issue precisa tratar erro de conexao
+
 // @audit-ok // deve salvar uma conta no banco de dados
 func TestAccountRepository_Save(t *testing.T) {
 	db, mock, err := sqlmock.New()
@@ -36,6 +38,18 @@ func TestAccountRepository_Save(t *testing.T) {
 	err = repo.CreateAccount(account)
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
+
+	t.Run("Should return an error if query fails", func(t *testing.T) {
+		mock.ExpectPrepare("INSERT INTO accounts").
+			ExpectExec().
+			WithArgs(account.ID, account.Name, account.Email, account.APIKey, account.Balance, account.CreatedAt, account.UpdatedAt).
+			WillReturnError(sql.ErrConnDone)
+
+		err = repo.CreateAccount(account)
+		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
 }
 
 // @audit-ok // deve encontrar uma conta pelo ID
@@ -68,6 +82,19 @@ func TestAccountRepository_FindByID(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, account, result)
 	assert.NoError(t, mock.ExpectationsWereMet())
+
+	t.Run("Should return an error if query fails", func(t *testing.T) {
+
+		mock.ExpectPrepare("SELECT id, name, email, api_key, balance, created_at, updated_at FROM accounts WHERE id = \\$1").
+			ExpectQuery().
+			WithArgs("invalid-id").
+			WillReturnError(sql.ErrNoRows)
+
+		result, err := repo.FindByID("invalid-id")
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
 }
 
 // @audit-ok // deve encontrar uma conta pelo API Key
@@ -100,6 +127,19 @@ func TestAccountRepository_FindByAPIKey(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, account, result)
 	assert.NoError(t, mock.ExpectationsWereMet())
+
+	t.Run("Should return an error if query fails", func(t *testing.T) {
+
+		mock.ExpectPrepare("SELECT id, name, email, api_key, balance, created_at, updated_at FROM accounts WHERE api_key = \\$1").
+			ExpectQuery().
+			WithArgs("invalid-api-key").
+			WillReturnError(sql.ErrNoRows)
+
+		result, err := repo.FindByAPIKey("invalid-api-key")
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
 }
 
 // @audit-ok // deve atualizar o saldo da conta
@@ -133,6 +173,24 @@ func TestAccountRepository_UpdateBalance(t *testing.T) {
 	err = repo.UpdateBalance(account)
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
+
+	t.Run("Should return an error if query fails", func(t *testing.T) {
+		mock.ExpectBegin()
+
+		mock.ExpectQuery("SELECT balance FROM accounts WHERE id = \\$1 FOR UPDATE").
+			WithArgs(account.ID).
+			WillReturnRows(sqlmock.NewRows([]string{"balance"}).AddRow(currentBalance))
+
+		mock.ExpectExec("UPDATE accounts SET balance = \\$1, updated_at = \\$2 WHERE id = \\$3").
+			WithArgs(currentBalance+account.Balance, account.UpdatedAt, account.ID).
+			WillReturnError(sql.ErrConnDone)
+
+		mock.ExpectRollback()
+
+		err = repo.UpdateBalance(account)
+		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
 }
 
 // @audit-ok // deve retornar erro se não encontrar a conta
@@ -160,6 +218,20 @@ func TestAccountRepository_UpdateBalance_NoRows(t *testing.T) {
 	err = repo.UpdateBalance(account)
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
+
+	t.Run(("Should return an error if query fails"), func(t *testing.T) {
+		mock.ExpectBegin()
+
+		mock.ExpectQuery("SELECT balance FROM accounts WHERE id = \\$1 FOR UPDATE").
+			WithArgs(account.ID).
+			WillReturnError(sql.ErrNoRows)
+
+		mock.ExpectRollback()
+
+		err = repo.UpdateBalance(account)
+		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
 }
 
 // @audit-ok // deve retornar erro se houver erro na consulta
@@ -187,6 +259,20 @@ func TestAccountRepository_UpdateBalance_QueryError(t *testing.T) {
 	err = repo.UpdateBalance(account)
 	assert.Error(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
+
+	t.Run("Should return an error if query fails", func(t *testing.T) {
+		mock.ExpectBegin()
+
+		mock.ExpectQuery("SELECT balance FROM accounts WHERE id = \\$1 FOR UPDATE").
+			WithArgs(account.ID).
+			WillReturnError(sql.ErrConnDone)
+
+		mock.ExpectRollback()
+
+		err = repo.UpdateBalance(account)
+		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
 }
 
 // @audit-ok // deve retornar erro se houver erro na execução
@@ -220,6 +306,20 @@ func TestAccountRepository_UpdateBalance_ExecError(t *testing.T) {
 	err = repo.UpdateBalance(account)
 	assert.Error(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
+
+	t.Run("Should return an error if query fails", func(t *testing.T) {
+		mock.ExpectBegin()
+
+		mock.ExpectQuery("SELECT balance FROM accounts WHERE id = \\$1 FOR UPDATE").
+			WithArgs(account.ID).
+			WillReturnError(sql.ErrConnDone)
+
+		mock.ExpectRollback()
+
+		err = repo.UpdateBalance(account)
+		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
 }
 
 // @audit-ok // deve retornar erro se houver erro no commit
@@ -253,4 +353,18 @@ func TestAccountRepository_UpdateBalance_CommitError(t *testing.T) {
 	err = repo.UpdateBalance(account)
 	assert.Error(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
+	t.Run("Should return an error if query fails", func(t *testing.T) {
+		mock.ExpectBegin()
+
+		mock.ExpectQuery("SELECT balance FROM accounts WHERE id = \\$1 FOR UPDATE").
+			WithArgs(account.ID).
+			WillReturnError(sql.ErrConnDone)
+
+		mock.ExpectRollback()
+
+		err = repo.UpdateBalance(account)
+		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
 }
