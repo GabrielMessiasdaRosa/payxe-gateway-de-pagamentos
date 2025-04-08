@@ -20,8 +20,8 @@ const (
 
 // InvoiceDomain represents the invoice domain entity
 type InvoiceDomain struct {
-	ID             uuid.UUID
-	AccountID      uuid.UUID
+	ID             string
+	AccountID      string
 	Amount         float64
 	Status         Status
 	Description    string
@@ -32,7 +32,7 @@ type InvoiceDomain struct {
 }
 
 // NewInvoice creates a new invoice with default values
-func NewInvoice(accountID uuid.UUID, amount float64, description string, paymentType string, card *valueObjects.CreditCard) (*InvoiceDomain, error) {
+func NewInvoice(accountID string, amount float64, description string, paymentType string, card *valueObjects.CreditCard) (*InvoiceDomain, error) {
 	if amount <= 0 {
 		return nil, ErrInvalidAmount
 	}
@@ -43,7 +43,7 @@ func NewInvoice(accountID uuid.UUID, amount float64, description string, payment
 	}
 
 	invoice := &InvoiceDomain{
-		ID:             uuid.New(),
+		ID:             uuid.New().String(),
 		AccountID:      accountID,
 		Amount:         amount,
 		Status:         StatusPending,

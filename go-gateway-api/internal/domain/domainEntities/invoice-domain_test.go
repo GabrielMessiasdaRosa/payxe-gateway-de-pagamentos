@@ -11,7 +11,7 @@ import (
 
 func TestNewInvoice(t *testing.T) {
 	t.Run("should create a new invoice successfully", func(t *testing.T) {
-		accountID := uuid.New()
+		accountID := uuid.New().String()
 		card := &valueObjects.CreditCard{
 			Number:          "4111111111111111",
 			CVV:             "123",
@@ -35,7 +35,7 @@ func TestNewInvoice(t *testing.T) {
 	})
 
 	t.Run("should create invoice without credit card", func(t *testing.T) {
-		accountID := uuid.New()
+		accountID := uuid.New().String()
 
 		invoice, err := NewInvoice(accountID, 100.0, "Test invoice", "pix", nil)
 
@@ -45,7 +45,7 @@ func TestNewInvoice(t *testing.T) {
 	})
 
 	t.Run("should return error when amount is zero", func(t *testing.T) {
-		accountID := uuid.New()
+		accountID := uuid.New().String()
 
 		invoice, err := NewInvoice(accountID, 0, "Test invoice", "credit_card", nil)
 
@@ -54,7 +54,7 @@ func TestNewInvoice(t *testing.T) {
 	})
 
 	t.Run("should return error when amount is negative", func(t *testing.T) {
-		accountID := uuid.New()
+		accountID := uuid.New().String()
 
 		invoice, err := NewInvoice(accountID, -10.0, "Test invoice", "credit_card", nil)
 
@@ -65,7 +65,7 @@ func TestNewInvoice(t *testing.T) {
 
 func TestSetStatus(t *testing.T) {
 	t.Run("should set status successfully", func(t *testing.T) {
-		accountID := uuid.New()
+		accountID := uuid.New().String()
 		invoice, _ := NewInvoice(accountID, 100.0, "Test invoice", "credit_card", nil)
 		oldUpdatedAt := invoice.UpdatedAt
 
@@ -77,7 +77,7 @@ func TestSetStatus(t *testing.T) {
 	})
 
 	t.Run("should panic when setting status on non-pending invoice", func(t *testing.T) {
-		accountID := uuid.New()
+		accountID := uuid.New().String()
 		invoice, _ := NewInvoice(accountID, 100.0, "Test invoice", "credit_card", nil)
 		invoice.SetStatus(StatusApproved)
 
@@ -89,7 +89,7 @@ func TestSetStatus(t *testing.T) {
 
 func TestProcess(t *testing.T) {
 	t.Run("should process invoice and return no error", func(t *testing.T) {
-		accountID := uuid.New()
+		accountID := uuid.New().String()
 		invoice, _ := NewInvoice(accountID, 100.0, "Test invoice", "credit_card", nil)
 		oldUpdatedAt := invoice.UpdatedAt
 
@@ -102,7 +102,7 @@ func TestProcess(t *testing.T) {
 	})
 
 	t.Run("should return error when amount is invalid", func(t *testing.T) {
-		accountID := uuid.New()
+		accountID := uuid.New().String()
 		invoice, _ := NewInvoice(accountID, 100.0, "Test invoice", "credit_card", nil)
 		invoice.Amount = 0
 
