@@ -11,7 +11,6 @@ func TestNewAccount(t *testing.T) {
 	email := "john.doe@example.com"
 
 	account := NewAccount(name, email)
-
 	if account.Name != name {
 		t.Errorf("expected Name to be %s, got %s", name, account.Name)
 	}
@@ -73,7 +72,7 @@ func TestGenerateAPIKey(t *testing.T) {
 
 // @audit-ok // deve garantir que o mutex está funcionando corretamente ao adicionar saldo
 func TestAddBalanceConcurrency(t *testing.T) {
-	
+
 	account := NewAccount("Concurrent User", "concurrent.user@example.com")
 	amount := 50.0
 	var wg sync.WaitGroup

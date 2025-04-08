@@ -3,44 +3,88 @@ package dto
 import (
 	"testing"
 
-	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain/domainEntities"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFromAccount(t *testing.T) {
-	t.Run("Should convert AccountDomain to AccountOutputDTO", func(t *testing.T) {
+func TestToAccountDomain(t *testing.T) {
+	t.Run("should convert AccountOutputDTO to AccountDomain", func(t *testing.T) {
 		// Arrange
-		accountDomain := domainEntities.NewAccount("Test Account", "test@example.com")
-		accountDomain.ID = "test-id"
-		accountDomain.Balance = 100.50
-		accountDomain.APIKey = "test-api-key"
+		input := AccountOutputDTO{
+			ID:      "account-id-123",
+			Name:    "Test User",
+			Email:   "test@example.com",
+			Balance: 150.75,
+			APIKey:  "api-key-456",
+		}
 
 		// Act
-		result := FromAccount(accountDomain)
+		result := ToAccountDomain(input)
 
 		// Assert
-		assert.Equal(t, accountDomain.ID, result.ID)
-		assert.Equal(t, accountDomain.Name, result.Name)
-		assert.Equal(t, accountDomain.Email, result.Email)
-		assert.Equal(t, accountDomain.Balance, result.Balance)
-		assert.Equal(t, accountDomain.APIKey, result.APIKey)
+		assert.Equal(t, input.Name, result.Name)
+		assert.Equal(t, input.Email, result.Email)
+		assert.NotEmpty(t, result.ID)
+		assert.NotEmpty(t, result.APIKey)
+
 	})
 
-	t.Run("Should handle zero values correctly", func(t *testing.T) {
+	t.Run("should convert CreateAccountInputDTO to AccountDomain", func(t *testing.T) {
 		// Arrange
-		accountDomain := domainEntities.NewAccount("", "")
-		accountDomain.ID = ""
-		accountDomain.Balance = 0
-		accountDomain.APIKey = ""
+		input := CreateAccountInputDTO{
+			Name:  "Test User",
+			Email: "test@example.com",
+		}
 
 		// Act
-		result := FromAccount(accountDomain)
+		result := ToAccountDomain(input)
 
 		// Assert
-		assert.Equal(t, "", result.ID)
-		assert.Equal(t, "", result.Name)
-		assert.Equal(t, "", result.Email)
-		assert.Equal(t, 0.0, result.Balance)
-		assert.Equal(t, "", result.APIKey)
+		assert.Equal(t, result.ID, "")
+		assert.Equal(t, input.Name, result.Name)
+		assert.Equal(t, input.Email, result.Email)
+		assert.Equal(t, result.Balance, 0.0)
+		assert.Equal(t, result.APIKey, "")
+	})
+
+	t.Run("should convert UpdateAccountInputDTO to AccountDomain", func(t *testing.T) {
+		// Arrange
+
+		input := UpdateAccountInputDTO{
+			ID:      "account-id-123",
+			Balance: 100.50,
+			Name:    "Test User",
+			Email:   "test@example.com",
+			APIKey:  "api-key-456",
+		}
+
+		// Act
+		result := ToAccountDomain(input)
+
+		// Assert
+		assert.Equal(t, input.ID, result.ID)
+		assert.Equal(t, input.Balance, result.Balance)
+		assert.Equal(t, input.Name, result.Name)
+		assert.Equal(t, input.Email, result.Email)
+		assert.Equal(t, input.APIKey, result.APIKey)
+	})
+	t.Run("should handle nil input", func(t *testing.T) {
+		// Act
+		result := ToAccountDomain(nil)
+
+		// Assert
+		assert.Nil(t, result)
+	})
+	t.Run("should handle unsupported type", func(t *testing.T) {
+		// Arrange
+		type UnsupportedType struct {
+			Field string
+		}
+		input := UnsupportedType{Field: "test"}
+
+		// Act
+		result := ToAccountDomain(input)
+
+		// Assert
+		assert.Nil(t, result)
 	})
 }

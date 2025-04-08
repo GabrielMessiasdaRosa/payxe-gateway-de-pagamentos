@@ -1,7 +1,7 @@
 package dto
 
-type UpdateAccountInputDTO struct {
-	ID      string  `json:"id" validate:"required"`
+type AccountOutputDTO struct {
+	ID      string  `json:"id"`
 	Name    string  `json:"name"`
 	Email   string  `json:"email"`
 	Balance float64 `json:"balance"`

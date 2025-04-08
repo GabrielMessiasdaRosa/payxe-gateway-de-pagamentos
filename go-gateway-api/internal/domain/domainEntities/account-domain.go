@@ -9,14 +9,13 @@ import (
 	"github.com/google/uuid"
 )
 
-
 type AccountDomain struct {
-	ID 	 string
-	Name string
-	Email string
-	APIKey string
-	Balance float64
-	mutex sync.Mutex
+	ID        string
+	Name      string
+	Email     string
+	APIKey    string
+	Balance   float64
+	mutex     sync.Mutex
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -28,16 +27,14 @@ func generateAPIKey() string {
 	return hex.EncodeToString(b)
 }
 
-
 // * siginifica um ponteiro
 func NewAccount(name, email string) *AccountDomain {
-
 	account := &AccountDomain{
-		ID: uuid.New().String(),
-		Name: name,
-		Email: email,
-		APIKey: generateAPIKey(),
-		Balance: 0,
+		ID:        uuid.New().String(),
+		Name:      name,
+		Email:     email,
+		APIKey:    generateAPIKey(),
+		Balance:   0,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -50,4 +47,3 @@ func (account *AccountDomain) AddBalance(amount float64) {
 	account.Balance += amount
 	account.UpdatedAt = time.Now()
 }
-
