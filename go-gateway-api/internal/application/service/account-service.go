@@ -19,22 +19,23 @@ func NewAccountService(accountRepository domainRepositories.AccountDomainReposit
 }
 
 func (accService *AccountService) CreateAccount(acc *dto.CreateAccountInputDTO) (*dto.AccountOutputDTO, error) {
-	newAcc := *domainEntities.NewAccount(acc.Name, acc.Email)
-	err := accService.accountRepository.CreateAccount(&newAcc)
+	newAccount := domainEntities.NewAccount(acc.Name, acc.Email)
+	err := accService.accountRepository.CreateAccount(newAccount)
 	if err != nil {
 		return nil, err
 	}
-	output := dto.FromAccount(&newAcc)
-	output.ID = newAcc.ID
-	output.APIKey = newAcc.APIKey
+	output := dto.FromAccount(newAccount)
 	return output, nil
+
 }
 
 func (accService *AccountService) FindByAPIKey(apiKey string) (*dto.AccountOutputDTO, error) {
 	account, err := accService.accountRepository.FindByAPIKey(apiKey)
-	fmt.Printf("A&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&: %v\n", account.ID)
 	if err != nil {
 		return nil, err
+	}
+	if account == nil {
+		return nil, domainEntities.ErrAccountNotFound
 	}
 	output := dto.FromAccount(account)
 	return output, nil
@@ -44,6 +45,9 @@ func (accService *AccountService) FindByID(id string) (*dto.AccountOutputDTO, er
 	account, err := accService.accountRepository.FindByID(id)
 	if err != nil {
 		return nil, err
+	}
+	if account == nil {
+		return nil, domainEntities.ErrAccountNotFound
 	}
 	output := dto.FromAccount(account)
 	return output, nil

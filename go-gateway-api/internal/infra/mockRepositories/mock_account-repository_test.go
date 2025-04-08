@@ -1,92 +1,132 @@
 package mockRepositories
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain/domainEntities"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMockAccountRepository_FindByAPIKey(t *testing.T) {
-	t.Run("should return account when FindByAPIKey is called", func(t *testing.T) {
-		// Arrange
-		mockRepo := new(MockAccountRepository)
-		apiKey := "test-api-key"
-		expectedAccount := domainEntities.AccountDomain{
-			ID:    "acc123",
-			Name:  "Test Account",
-			Email: "test@example.com",
-		}
+func TestNewInMemoryAccountRepository(t *testing.T) {
+	repo := NewInMemoryAccountRepository()
+	assert.NotNil(t, repo)
+	assert.Empty(t, repo.accounts)
+}
 
-		mockRepo.On("FindByAPIKey", apiKey).Return(&expectedAccount, nil)
+func TestCreateAccount(t *testing.T) {
+	repo := NewInMemoryAccountRepository()
+	account := &domainEntities.AccountDomain{
+		ID:      "1",
+		APIKey:  "api-key-1",
+		Balance: 100,
+	}
 
-		// Act
-		account, err := mockRepo.FindByAPIKey(apiKey)
+	err := repo.CreateAccount(account)
+	assert.Nil(t, err)
+	assert.Len(t, repo.accounts, 1)
+	assert.Equal(t, account, repo.accounts[0])
+}
 
-		// Assert
-		assert.NoError(t, err)
-		assert.NotNil(t, account)
-		assert.Equal(t, &expectedAccount, account)
-		mockRepo.AssertExpectations(t)
+func TestFindByID(t *testing.T) {
+	repo := NewInMemoryAccountRepository()
+	account1 := &domainEntities.AccountDomain{
+		ID:      "1",
+		APIKey:  "api-key-1",
+		Balance: 100,
+	}
+	account2 := &domainEntities.AccountDomain{
+		ID:      "2",
+		APIKey:  "api-key-2",
+		Balance: 200,
+	}
+
+	repo.CreateAccount(account1)
+	repo.CreateAccount(account2)
+
+	t.Run("should find account by ID", func(t *testing.T) {
+		found, err := repo.FindByID("1")
+		assert.Nil(t, err)
+		assert.Equal(t, account1, found)
+
+		found, err = repo.FindByID("2")
+		assert.Nil(t, err)
+		assert.Equal(t, account2, found)
 	})
 
-	t.Run("should return error when FindByAPIKey fails", func(t *testing.T) {
-		// Arrange
-		mockRepo := new(MockAccountRepository)
-		apiKey := "invalid-api-key"
-		expectedError := errors.New("account not found")
-
-		mockRepo.On("FindByAPIKey", apiKey).Return(nil, expectedError)
-
-		// Act
-		account, err := mockRepo.FindByAPIKey(apiKey)
-
-		// Assert
+	t.Run("should return error when account not found", func(t *testing.T) {
+		found, err := repo.FindByID("non-existent")
 		assert.Error(t, err)
-		assert.Nil(t, account)
-		assert.Equal(t, expectedError, err)
-		mockRepo.AssertExpectations(t)
+		assert.Equal(t, "account not found", err.Error())
+		assert.Nil(t, found)
+	})
+}
+
+func TestFindByAPIKey(t *testing.T) {
+	repo := NewInMemoryAccountRepository()
+	account1 := &domainEntities.AccountDomain{
+		ID:      "1",
+		APIKey:  "api-key-1",
+		Balance: 100,
+	}
+	account2 := &domainEntities.AccountDomain{
+		ID:      "2",
+		APIKey:  "api-key-2",
+		Balance: 200,
+	}
+
+	repo.CreateAccount(account1)
+	repo.CreateAccount(account2)
+
+	t.Run("should find account by API key", func(t *testing.T) {
+		found, err := repo.FindByAPIKey("api-key-1")
+		assert.Nil(t, err)
+		assert.Equal(t, account1, found)
+
+		found, err = repo.FindByAPIKey("api-key-2")
+		assert.Nil(t, err)
+		assert.Equal(t, account2, found)
 	})
 
-	t.Run("should handle nil account return", func(t *testing.T) {
-		// Arrange
-		mockRepo := new(MockAccountRepository)
-		apiKey := "api-key-with-no-account"
-
-		mockRepo.On("FindByAPIKey", apiKey).Return(nil, nil)
-
-		// Act
-		account, err := mockRepo.FindByAPIKey(apiKey)
-
-		// Assert
-		assert.NoError(t, err)
-		assert.Nil(t, account)
-		mockRepo.AssertExpectations(t)
+	t.Run("should return error when account not found", func(t *testing.T) {
+		found, err := repo.FindByAPIKey("non-existent")
+		assert.Error(t, err)
+		assert.Equal(t, "account not found", err.Error())
+		assert.Nil(t, found)
 	})
+}
 
-	t.Run("Should update balance successfully", func(t *testing.T) {
-		// Arrange
-		mockRepo := new(MockAccountRepository)
-		expectedAccount := &domainEntities.AccountDomain{
-			ID:      "acc123",
-			Name:    "Test Account",
-			Email:   "test@example.com",
-			Balance: 100.0,
+func TestUpdateBalance(t *testing.T) {
+	repo := NewInMemoryAccountRepository()
+	account := &domainEntities.AccountDomain{
+		ID:      "1",
+		APIKey:  "api-key-1",
+		Balance: 100,
+	}
+
+	repo.CreateAccount(account)
+
+	t.Run("should update account balance", func(t *testing.T) {
+		updatedAccount := &domainEntities.AccountDomain{
+			ID:      "1",
+			APIKey:  "api-key-1",
+			Balance: 200,
 		}
-		newBalance := 150.0
-		expectedAccount.Balance = newBalance
-		mockRepo.On("UpdateBalance", expectedAccount).Return(nil)
-		mockRepo.On("FindByID", expectedAccount.ID).Return(expectedAccount, nil)
 
-		// Act
-		mockRepo.UpdateBalance(expectedAccount)
-		updatedAcc, err := mockRepo.FindByID(expectedAccount.ID)
+		err := repo.UpdateBalance(updatedAccount)
+		assert.Nil(t, err)
 
-		// Assert
-		assert.NoError(t, err)
-		assert.NotNil(t, updatedAcc)
-		assert.Equal(t, newBalance, updatedAcc.Balance)
-		mockRepo.AssertExpectations(t)
+		found, _ := repo.FindByID("1")
+		assert.Equal(t, float64(200), found.Balance)
+	})
+
+	t.Run("should return error when account not found", func(t *testing.T) {
+		nonExistentAccount := &domainEntities.AccountDomain{
+			ID:      "non-existent",
+			Balance: 300,
+		}
+
+		err := repo.UpdateBalance(nonExistentAccount)
+		assert.Error(t, err)
+		assert.Equal(t, "account not found", err.Error())
 	})
 }

@@ -1,153 +1,127 @@
-package service
+package service_test
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/application/dto"
+	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/application/service"
 	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/infra/mockRepositories"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
-func TestAccountService_CreateAccount(t *testing.T) {
-	t.Run("should create account successfully", func(t *testing.T) {
-		// Arrange
-		mockRepo := new(mockRepositories.MockAccountRepository)
-		service := NewAccountService(mockRepo)
+func TestCreateAccount(t *testing.T) {
+	repo := mockRepositories.NewInMemoryAccountRepository()
+	accService := service.NewAccountService(repo)
 
-		input := &dto.CreateAccountInputDTO{
-			Name:  "Test Account",
-			Email: "test@example.com",
-		}
+	input := &dto.CreateAccountInputDTO{
+		Name:  "John Doe",
+		Email: "john@example.com",
+	}
 
-		mockRepo.On("CreateAccount", mock.Anything).Return(nil)
-
-		// Act
-		output, err := service.CreateAccount(input)
-
-		// Assert
-		assert.NoError(t, err)
-		assert.NotNil(t, output)
-		assert.NotNil(t, output.ID)
-		assert.NotEmpty(t, output.APIKey)
-		assert.Equal(t, input.Name, output.Name)
-		assert.Equal(t, input.Email, output.Email)
-		mockRepo.AssertExpectations(t)
-	})
-	t.Run("should return error when repository fails", func(t *testing.T) {
-		// Arrange
-		mockRepo := new(mockRepositories.MockAccountRepository)
-		service := NewAccountService(mockRepo)
-
-		input := &dto.CreateAccountInputDTO{
-			Name:  "Test Account",
-			Email: "test@example.com",
-		}
-
-		expectedError := errors.New("repository error")
-		mockRepo.On("CreateAccount", mock.Anything).Return(expectedError)
-		mockRepo.On("CreateAccount", mock.Anything).Return(expectedError)
-
-		// Act
-		output, err := service.CreateAccount(input)
-
-		// Assert
-		assert.Error(t, err)
-		assert.Nil(t, output)
-		mockRepo.AssertExpectations(t)
-	})
+	output, err := accService.CreateAccount(input)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if output.Name != input.Name {
+		t.Errorf("expected name %s, got %s", input.Name, output.Name)
+	}
+	if output.Email != input.Email {
+		t.Errorf("expected email %s, got %s", input.Email, output.Email)
+	}
+	if output.ID == "" {
+		t.Errorf("expected non-empty ID")
+	}
+	if output.APIKey == "" {
+		t.Errorf("expected non-empty APIKey")
+	}
 }
 
-func TestAccountService_FindByAPIKey(t *testing.T) {
-	t.Run("should find account by API key successfully", func(t *testing.T) {
-		// Arrange
-		mockRepo := new(mockRepositories.MockAccountRepository)
-		service := NewAccountService(mockRepo)
+func TestFindByAPIKey(t *testing.T) {
+	repo := mockRepositories.NewInMemoryAccountRepository()
+	accService := service.NewAccountService(repo)
 
-		input := &dto.CreateAccountInputDTO{
-			Name:  "Test Account",
-			Email: "test@example.com",
-		}
+	// Create an account first.
+	input := &dto.CreateAccountInputDTO{
+		Name:  "Alice",
+		Email: "alice@example.com",
+	}
+	created, err := accService.CreateAccount(input)
+	if err != nil {
+		t.Fatalf("error creating account: %v", err)
+	}
 
-		mockRepo.On("CreateAccount", mock.Anything).Return(nil)
-		// Act
-		output, err := service.CreateAccount(input)
+	// Successful lookup.
+	found, err := accService.FindByAPIKey(created.APIKey)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if found.ID != created.ID {
+		t.Errorf("expected ID %s, got %s", created.ID, found.ID)
+	}
 
-		// Assert
-		assert.NoError(t, err)
-		assert.NotNil(t, output)
-		assert.NotNil(t, output.ID)
-		assert.NotEmpty(t, output.APIKey)
-		assert.Equal(t, input.Name, output.Name)
-		assert.Equal(t, input.Email, output.Email)
-		mockRepo.AssertExpectations(t)
+	// Negative lookup: non-existent APIKey.
+	_, err = accService.FindByAPIKey("non-existent-apikey")
+	if err == nil {
+		t.Errorf("expected error for non-existent APIKey")
+	}
+}
 
-		mockRepo.On("FindByAPIKey", output.APIKey).Return(output, nil)
-		account, err := service.FindByAPIKey(output.APIKey)
-		assert.NoError(t, err)
-		assert.NotNil(t, account)
-		assert.Equal(t, output.ID, account.ID)
-		assert.Equal(t, output.Name, account.Name)
-		assert.Equal(t, input.Email, account.Email)
-		assert.Equal(t, output.Balance, account.Balance)
-		assert.Equal(t, output.APIKey, account.APIKey)
-		mockRepo.AssertExpectations(t)
-	})
+func TestFindByID(t *testing.T) {
+	repo := mockRepositories.NewInMemoryAccountRepository()
+	accService := service.NewAccountService(repo)
 
-	t.Run("should return error when account not found", func(t *testing.T) {
-		// Arrange
-		mockRepo := new(mockRepositories.MockAccountRepository)
-		service := NewAccountService(mockRepo)
+	// Create an account first.
+	input := &dto.CreateAccountInputDTO{
+		Name:  "Bob",
+		Email: "bob@example.com",
+	}
+	created, err := accService.CreateAccount(input)
+	if err != nil {
+		t.Fatalf("error creating account: %v", err)
+	}
 
-		apiKey := "non-existent-api-key"
-		expectedError := errors.New("account not found")
-		mockRepo.On("FindByAPIKey", apiKey).Return(nil, expectedError)
+	// Successful lookup.
+	found, err := accService.FindByID(created.ID)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if found.APIKey != created.APIKey {
+		t.Errorf("expected APIKey %s, got %s", created.APIKey, found.APIKey)
+	}
 
-		// Act
-		account, err := service.FindByAPIKey(apiKey)
+	// Negative lookup: non-existent ID.
+	_, err = accService.FindByID("non-existent-id")
+	if err == nil {
+		t.Errorf("expected error for non-existent ID")
+	}
+}
 
-		// Assert
-		assert.Error(t, err)
-		assert.Nil(t, account)
-		mockRepo.AssertExpectations(t)
-	})
+func TestUpdateBalance(t *testing.T) {
+	repo := mockRepositories.NewInMemoryAccountRepository()
+	accService := service.NewAccountService(repo)
 
-	t.Run("should return account by ID successfully", func(t *testing.T) {
+	// Create an account first.
+	input := &dto.CreateAccountInputDTO{
+		Name:  "Charlie",
+		Email: "charlie@example.com",
+	}
+	created, err := accService.CreateAccount(input)
+	if err != nil {
+		t.Fatalf("error creating account: %v", err)
+	}
 
-	})
+	// Successful balance update.
+	updateInput := &dto.UpdateAccountInputDTO{
+		ID: created.ID,
+	}
+	err = accService.UpdateBalance(updateInput)
+	if err != nil {
+		t.Fatalf("expected no error updating balance, got %v", err)
+	}
 
-	t.Run("should update account balance successfully", func(t *testing.T) {
-		// Arrange
-		mockRepo := new(mockRepositories.MockAccountRepository)
-		service := NewAccountService(mockRepo)
-
-		input := &dto.CreateAccountInputDTO{
-			Name:  "Test Account",
-			Email: "test@example.com",
-		}
-
-		mockRepo.On("CreateAccount", mock.Anything).Return(nil)
-
-		// Act
-		output, _ := service.CreateAccount(input)
-
-		// Arrange
-		updateInput := &dto.UpdateAccountInputDTO{
-			ID:      output.ID,
-			Balance: 100.0,
-			Name:    "Updated Account",
-			Email:   "updated@example.com",
-			APIKey:  "updated-api-key",
-		}
-
-		mockRepo.On("FindByID", output.ID).Return(output, nil)
-		mockRepo.On("UpdateBalance", output).Return(nil)
-		// Act
-		err := service.UpdateBalance(updateInput)
-		// Assert
-		assert.NoError(t, err)
-		mockRepo.AssertExpectations(t)
-
-	})
+	// Negative: update balance for a non-existent account.
+	updateInput.ID = "non-existent-id"
+	err = accService.UpdateBalance(updateInput)
+	if err == nil {
+		t.Errorf("expected error when updating balance for non-existent account")
+	}
 }

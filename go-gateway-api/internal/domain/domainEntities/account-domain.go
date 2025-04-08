@@ -1,8 +1,6 @@
 package domainEntities
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"sync"
 	"time"
 
@@ -20,20 +18,13 @@ type AccountDomain struct {
 	UpdatedAt time.Time
 }
 
-func generateAPIKey() string {
-	// b é um slice de bytes com 16 bytes
-	b := make([]byte, 16)
-	rand.Read(b)
-	return hex.EncodeToString(b)
-}
-
 // * siginifica um ponteiro
 func NewAccount(name, email string) *AccountDomain {
 	account := &AccountDomain{
 		ID:        uuid.New().String(),
 		Name:      name,
 		Email:     email,
-		APIKey:    generateAPIKey(),
+		APIKey:    uuid.New().String(),
 		Balance:   0,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),

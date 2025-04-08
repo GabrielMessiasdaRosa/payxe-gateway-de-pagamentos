@@ -53,23 +53,6 @@ func TestAddBalance(t *testing.T) {
 	}
 }
 
-// @audit-ok // deve criar uma chave de API única
-func TestGenerateAPIKey(t *testing.T) {
-	// Chaves de API geradas
-	apiKey1 := generateAPIKey()
-	apiKey2 := generateAPIKey()
-
-	// Verifica se as chaves de API são únicas
-	if apiKey1 == apiKey2 {
-		t.Error("expected API keys to be unique, but they are the same")
-	}
-
-	// Verifica se as chaves de API têm o tamanho correto
-	if len(apiKey1) != 32 || len(apiKey2) != 32 {
-		t.Error("expected API keys to be 32 characters long")
-	}
-}
-
 // @audit-ok // deve garantir que o mutex está funcionando corretamente ao adicionar saldo
 func TestAddBalanceConcurrency(t *testing.T) {
 

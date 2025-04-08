@@ -1,48 +1,50 @@
 package mockRepositories
 
 import (
+	"errors"
+
 	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain/domainEntities"
-	"github.com/stretchr/testify/mock"
 )
 
-type MockAccountRepository struct {
-	mock.Mock
+type InMemoryAccountRepository struct {
+	accounts []*domainEntities.AccountDomain
 }
 
-func (m *MockAccountRepository) CreateAccount(account *domainEntities.AccountDomain) error {
-	args := m.Called(account)
-	return args.Error(0)
-}
-
-func (m *MockAccountRepository) FindByAPIKey(apiKey string) (*domainEntities.AccountDomain, error) {
-	acc := m.Called(apiKey).Get(0)
-
-	// Retorna o valor como *domainEntities.AccountDomain
-	account := acc
-
-	if account == nil {
-		return nil, nil
+func NewInMemoryAccountRepository() *InMemoryAccountRepository {
+	return &InMemoryAccountRepository{
+		accounts: make([]*domainEntities.AccountDomain, 0),
 	}
-
-	accountDomain, ok := account.(*domainEntities.AccountDomain)
-	if !ok {
-		panic("interface conversion error: expected *domainEntities.AccountDomain")
-	}
-
-	return accountDomain, nil
 }
 
-func (m *MockAccountRepository) FindByID(id string) (*domainEntities.AccountDomain, error) {
-	ret := m.Called(id)
-	// Retorna o valor como *domainEntities.AccountDomain
-	account, ok := ret.Get(0).(*domainEntities.AccountDomain)
-	if !ok && ret.Get(0) != nil {
-		panic("interface conversion error: expected *domainEntities.AccountDomain")
-	}
-	return account, ret.Error(1)
+func (repo *InMemoryAccountRepository) CreateAccount(account *domainEntities.AccountDomain) error {
+	repo.accounts = append(repo.accounts, account)
+	return nil
 }
 
-func (m *MockAccountRepository) UpdateBalance(account *domainEntities.AccountDomain) error {
-	args := m.Called(account)
-	return args.Error(0)
+func (repo *InMemoryAccountRepository) FindByID(id string) (*domainEntities.AccountDomain, error) {
+	for _, acc := range repo.accounts {
+		if acc.ID == id {
+			return acc, nil
+		}
+	}
+	return nil, errors.New("account not found")
+}
+
+func (repo *InMemoryAccountRepository) FindByAPIKey(apiKey string) (*domainEntities.AccountDomain, error) {
+	for _, acc := range repo.accounts {
+		if acc.APIKey == apiKey {
+			return acc, nil
+		}
+	}
+	return nil, errors.New("account not found")
+}
+
+func (repo *InMemoryAccountRepository) UpdateBalance(account *domainEntities.AccountDomain) error {
+	for i, acc := range repo.accounts {
+		if acc.ID == account.ID {
+			repo.accounts[i] = account
+			return nil
+		}
+	}
+	return errors.New("account not found")
 }

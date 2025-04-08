@@ -3,6 +3,7 @@ package dto
 import (
 	"testing"
 
+	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain/domainEntities"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -87,4 +88,30 @@ func TestToAccountDomain(t *testing.T) {
 		// Assert
 		assert.Nil(t, result)
 	})
+
+	t.Run("Should test FromAccount", func(t *testing.T) {
+
+		input := &domainEntities.AccountDomain{
+			ID:      "account-id-123654654654",
+			Name:    "Test User",
+			Email:   "test@example.com",
+			Balance: 150.75,
+			APIKey:  "api-key-456",
+		}
+
+		result := FromAccount(input)
+
+		assert.Equal(t, input.ID, result.ID)
+		assert.Equal(t, input.Name, result.Name)
+		assert.Equal(t, input.Email, result.Email)
+		assert.Equal(t, input.Balance, result.Balance)
+		assert.Equal(t, input.APIKey, result.APIKey)
+	})
+
+	t.Run("Should throw panic when FromAccount is called with nil input", func(t *testing.T) {
+		assert.Panics(t, func() {
+			FromAccount(nil)
+		})
+	})
+
 }
