@@ -219,19 +219,6 @@ func TestAccountRepository_UpdateBalance_NoRows(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 
-	t.Run(("Should return an error if query fails"), func(t *testing.T) {
-		mock.ExpectBegin()
-
-		mock.ExpectQuery("SELECT balance FROM accounts WHERE id = \\$1 FOR UPDATE").
-			WithArgs(account.ID).
-			WillReturnError(sql.ErrNoRows)
-
-		mock.ExpectRollback()
-
-		err = repo.UpdateBalance(account)
-		assert.Error(t, err)
-		assert.NoError(t, mock.ExpectationsWereMet())
-	})
 }
 
 // @audit-ok // deve retornar erro se houver erro na consulta
