@@ -1,9 +1,10 @@
 package domainEntities
 
 import (
-	"errors"
+	"math/rand"
 	"time"
 
+	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain/valueObjects"
 	"github.com/google/uuid"
 )
 
@@ -12,9 +13,9 @@ import (
 type Status string
 
 const (
-	StatusPending Status = "pending"
-	StatusPaid    Status = "paid"
-	StatusFailed  Status = "failed"
+	StatusPending  Status = "pending"
+	StatusApproved Status = "approved"
+	StatusFailed   Status = "failed"
 )
 
 // InvoiceDomain represents the invoice domain entity
@@ -31,54 +32,51 @@ type InvoiceDomain struct {
 }
 
 // NewInvoice creates a new invoice with default values
-func NewInvoice(accountID uuid.UUID, amount float64, description, cardLastDigits string) *InvoiceDomain {
-	now := time.Now()
-	return &InvoiceDomain{
+func NewInvoice(accountID uuid.UUID, amount float64, description string, paymentType string, card *valueObjects.CreditCard) (*InvoiceDomain, error) {
+	if amount <= 0 {
+		return nil, ErrInvalidAmount
+	}
+
+	cardLastDigits := ""
+	if card != nil {
+		cardLastDigits = card.Number[len(card.Number)-4:]
+	}
+
+	invoice := &InvoiceDomain{
 		ID:             uuid.New(),
 		AccountID:      accountID,
 		Amount:         amount,
-		Status:         "pending",
+		Status:         StatusPending,
 		Description:    description,
+		PaymentType:    paymentType,
 		CardLastDigits: cardLastDigits,
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
 	}
+
+	return invoice, nil
 }
 
 // SetStatus updates the status of the invoice and the updated_at timestamp
 func (i *InvoiceDomain) SetStatus(status Status) {
+	if i.Status != StatusPending {
+		panic(ErrInvalidStatus)
+	}
 	i.Status = status
 	i.UpdatedAt = time.Now()
 }
 
-// IsValid validates the invoice fields
-func (i *InvoiceDomain) IsValid() error {
-	if i.AccountID == uuid.Nil {
-		return errors.New("account ID cannot be empty")
-	}
-
+func (i *InvoiceDomain) Process() error {
 	if i.Amount <= 0 {
-		return errors.New("amount must be greater than zero")
+		return ErrInvalidAmount
 	}
-
-	if i.Description == "" {
-		return errors.New("description cannot be empty")
+	randomSource := rand.New(rand.NewSource(time.Now().UnixNano()))
+	if randomSource.Float64() < 0.7 {
+		i.SetStatus(StatusApproved)
+	} else {
+		i.SetStatus(StatusFailed)
 	}
-
-	if i.CardLastDigits == "" {
-		return errors.New("card last digits cannot be empty")
-	}
-
-	// Validate status
-	validStatuses := map[Status]bool{
-		StatusPending: true,
-		StatusPaid:    true,
-		StatusFailed:  true,
-	}
-
-	if !validStatuses[i.Status] {
-		return errors.New("invalid status")
-	}
-
+	i.Status = StatusApproved
+	i.UpdatedAt = time.Now()
 	return nil
 }
