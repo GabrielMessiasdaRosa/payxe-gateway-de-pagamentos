@@ -21,7 +21,7 @@ func (r *AccountRepository) CreateAccount(account *domainEntities.AccountDomain)
 		return err
 	}
 	defer stmt.Close()
-	// _ é um identificador de variável que não será utilizado (Blank Identifier)
+
 	_, err = stmt.Exec(account.ID, account.Name, account.Email, account.APIKey, account.Balance, account.CreatedAt, account.UpdatedAt)
 	if err != nil {
 		return err

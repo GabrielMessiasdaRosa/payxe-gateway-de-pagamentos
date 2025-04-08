@@ -32,9 +32,6 @@ func (accService *AccountService) FindByAPIKey(apiKey string) (*dto.AccountOutpu
 	if err != nil {
 		return nil, err
 	}
-	if account == nil {
-		return nil, domainEntities.ErrAccountNotFound
-	}
 	output := dto.FromAccount(account)
 	return output, nil
 }
@@ -44,9 +41,6 @@ func (accService *AccountService) FindByID(id string) (*dto.AccountOutputDTO, er
 	if err != nil {
 		return nil, err
 	}
-	if account == nil {
-		return nil, domainEntities.ErrAccountNotFound
-	}
 	output := dto.FromAccount(account)
 	return output, nil
 }
@@ -55,9 +49,6 @@ func (accService *AccountService) UpdateBalance(acc *dto.UpdateAccountInputDTO) 
 	account, err := accService.accountRepository.FindByID(acc.ID)
 	if err != nil {
 		return err
-	}
-	if account == nil {
-		return domainEntities.ErrAccountNotFound
 	}
 	account.Balance = acc.Balance
 	return accService.accountRepository.UpdateBalance(account)
