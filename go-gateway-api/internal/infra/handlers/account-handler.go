@@ -35,9 +35,9 @@ func (h *AccountHandler) Create(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(account)
 }
 
-func (h *AccountHandler) FindByAPIKey(w http.ResponseWriter, r *http.Request) {
+func (h *AccountHandler) Get(w http.ResponseWriter, r *http.Request) {
 	// Handle finding account by API key
-	apiKey := r.URL.Query().Get("apiKey")
+	apiKey := r.Header.Get("X-API-Key")
 	if apiKey == "" {
 		http.Error(w, "API key is required", http.StatusBadRequest)
 		return
@@ -45,6 +45,10 @@ func (h *AccountHandler) FindByAPIKey(w http.ResponseWriter, r *http.Request) {
 	account, err := h.AccountService.FindByAPIKey(apiKey)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if account == nil {
+		http.Error(w, "Account not found", http.StatusNotFound)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

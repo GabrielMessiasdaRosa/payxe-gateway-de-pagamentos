@@ -15,7 +15,7 @@ func NewAccountRepository(db *sql.DB) *AccountRepository {
 		db: db,
 	}
 }
-func (r *AccountRepository) Save(account *domainEntities.AccountDomain) error {
+func (r *AccountRepository) CreateAccount(account *domainEntities.AccountDomain) error {
 	stmt, err := r.db.Prepare("INSERT INTO accounts (id, name, email, api_key, balance, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func (r *AccountRepository) FindByAPIKey(apiKey string) (*domainEntities.Account
 }
 
 func (r *AccountRepository) UpdateBalance(account *domainEntities.AccountDomain) error {
-	
+
 	tx, err := r.db.Begin()
 	if err != nil {
 		return err
@@ -72,7 +72,7 @@ func (r *AccountRepository) UpdateBalance(account *domainEntities.AccountDomain)
 		return nil
 	}
 	if err != nil {
-		return err 
+		return err
 	}
 
 	_, err = tx.Exec("UPDATE accounts SET balance = ?, updated_at = ? WHERE id = ?", currentBalance+account.Balance, account.UpdatedAt, account.ID)

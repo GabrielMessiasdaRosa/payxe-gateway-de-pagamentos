@@ -33,7 +33,7 @@ func TestAccountRepository_Save(t *testing.T) {
 		WithArgs(account.ID, account.Name, account.Email, account.APIKey, account.Balance, account.CreatedAt, account.UpdatedAt).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err = repo.Save(account)
+	err = repo.CreateAccount(account)
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -254,5 +254,3 @@ func TestAccountRepository_UpdateBalance_CommitError(t *testing.T) {
 	assert.Error(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
-
-
