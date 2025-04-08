@@ -9,18 +9,17 @@ import (
 )
 
 func TestFromInvoice(t *testing.T) {
-	t.Run("should convert from invoice domain to invoice output dto", func(t *testing.T) {
-		createdAt := time.Now()
-		updatedAt := time.Now()
-
+	t.Run("should convert invoice domain to dto", func(t *testing.T) {
+		now := time.Now()
 		invoice := &domainEntities.InvoiceDomain{
-			ID:          "123",
-			Amount:      100.0,
-			Description: "Test invoice",
-			Status:      "pending",
-			AccountID:   "acc123",
-			CreatedAt:   createdAt,
-			UpdatedAt:   updatedAt,
+			ID:             "123",
+			Amount:         100.0,
+			Description:    "Test invoice",
+			Status:         domainEntities.StatusApproved,
+			AccountID:      "acc123",
+			CardLastDigits: "1234",
+			CreatedAt:      now,
+			UpdatedAt:      now,
 		}
 
 		output := FromInvoice(invoice)
@@ -30,8 +29,8 @@ func TestFromInvoice(t *testing.T) {
 		assert.Equal(t, invoice.Description, output.Description)
 		assert.Equal(t, string(invoice.Status), output.Status)
 		assert.Equal(t, invoice.AccountID, output.AccountID)
-		assert.Equal(t, createdAt.Format("2006-01-02 15:04:05"), output.CreatedAt)
-		assert.Equal(t, updatedAt.Format("2006-01-02 15:04:05"), output.UpdatedAt)
+		assert.Equal(t, invoice.CreatedAt.Format("2006-01-02 15:04:05"), output.CreatedAt)
+		assert.Equal(t, invoice.UpdatedAt.Format("2006-01-02 15:04:05"), output.UpdatedAt)
 	})
 
 	t.Run("should panic when invoice is nil", func(t *testing.T) {
@@ -42,71 +41,91 @@ func TestFromInvoice(t *testing.T) {
 }
 
 func TestToInvoiceDomain(t *testing.T) {
-	t.Run("should convert from CreateInvoiceInputDTO to invoice domain", func(t *testing.T) {
+	t.Run("should convert CreateInvoiceInputDTO to domain", func(t *testing.T) {
 		input := CreateInvoiceInputDTO{
-			Amount:      100.0,
-			Description: "Test invoice",
-			AccountID:   "acc123",
+			Amount:          150.0,
+			Description:     "New invoice",
+			CardNumber:      "4111111111111111",
+			CVV:             "123",
+			CardHolderName:  "John Doe",
+			ExpirationMonth: 12,
+			ExpirationYear:  2030,
 		}
+		accountID := "acc456"
 
-		invoice := ToInvoiceDomain(input)
-
-		assert.Equal(t, input.Amount, invoice.Amount)
-		assert.Equal(t, input.Description, invoice.Description)
-		assert.Equal(t, input.AccountID, invoice.AccountID)
+		result := ToInvoiceDomain(input, accountID)
+		assert.NotNil(t, result)
+		assert.NotEmpty(t, result.ID)
+		assert.Equal(t, input.Amount, result.Amount)
+		assert.Equal(t, input.Description, result.Description)
+		assert.Equal(t, accountID, result.AccountID)
+		assert.Equal(t, domainEntities.StatusPending, result.Status)
+		assert.Equal(t, "1111", result.CardLastDigits)
 	})
 
-	t.Run("should convert from UpdateInvoiceInputDTO to invoice domain", func(t *testing.T) {
+	t.Run("should convert UpdateInvoiceInputDTO to domain", func(t *testing.T) {
 		input := UpdateInvoiceInputDTO{
-			ID:          "123",
-			Amount:      100.0,
+			ID:          "789",
+			Amount:      200.0,
 			Description: "Updated invoice",
-			Status:      "paid",
-			AccountID:   "acc123",
+			Status:      string(domainEntities.StatusApproved),
 		}
+		accountID := "acc789"
 
-		invoice := ToInvoiceDomain(input)
+		result := ToInvoiceDomain(input, accountID)
 
-		assert.Equal(t, input.ID, invoice.ID)
-		assert.Equal(t, input.Amount, invoice.Amount)
-		assert.Equal(t, input.Description, invoice.Description)
-		assert.Equal(t, string(invoice.Status), input.Status)
-		assert.Equal(t, input.AccountID, invoice.AccountID)
+		assert.NotNil(t, result)
+		assert.Equal(t, input.ID, result.ID)
+		assert.Equal(t, input.Amount, result.Amount)
+		assert.Equal(t, input.Description, result.Description)
+		assert.Equal(t, domainEntities.Status(input.Status), result.Status)
+		assert.Equal(t, accountID, result.AccountID)
 	})
 
-	t.Run("should convert from InvoiceOutputDTO to invoice domain", func(t *testing.T) {
+	t.Run("should convert InvoiceOutputDTO to domain", func(t *testing.T) {
+		now := time.Now().Format("2006-01-02 15:04:05")
 		input := InvoiceOutputDTO{
-			ID:          "123",
-			Amount:      100.0,
-			Description: "Test invoice",
-			Status:      "pending",
+			ID:          "456",
+			Amount:      300.0,
+			Description: "Existing invoice",
+			Status:      string(domainEntities.StatusApproved),
 			AccountID:   "acc123",
-			CreatedAt:   "2023-01-01 12:00:00",
-			UpdatedAt:   "2023-01-01 12:30:00",
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		}
+		accountID := "acc123"
+
+		result := ToInvoiceDomain(input, accountID)
+
+		assert.NotNil(t, result)
+		assert.Equal(t, input.ID, result.ID)
+		assert.Equal(t, input.Amount, result.Amount)
+		assert.Equal(t, input.Description, result.Description)
+		assert.Equal(t, domainEntities.Status(input.Status), result.Status)
+		assert.Equal(t, input.AccountID, result.AccountID)
+
+		parsedTime, _ := time.Parse("2006-01-02 15:04:05", now)
+		assert.Equal(t, parsedTime, result.CreatedAt)
+		assert.Equal(t, parsedTime, result.UpdatedAt)
+	})
+
+	t.Run("should return nil for invalid input type", func(t *testing.T) {
+		result := ToInvoiceDomain("invalid input", "acc123")
+		assert.Nil(t, result)
+	})
+
+	t.Run("should return nil for invalid credit card", func(t *testing.T) {
+		input := CreateInvoiceInputDTO{
+			Amount:          150.0,
+			Description:     "New invoice",
+			CardNumber:      "invalid",
+			CVV:             "123",
+			CardHolderName:  "John Doe",
+			ExpirationMonth: 12,
+			ExpirationYear:  2030,
 		}
 
-		invoice := ToInvoiceDomain(input)
-
-		assert.Equal(t, input.ID, invoice.ID)
-		assert.Equal(t, input.Amount, invoice.Amount)
-		assert.Equal(t, input.Description, invoice.Description)
-		assert.Equal(t, input.Status, string(invoice.Status))
-		assert.Equal(t, input.AccountID, invoice.AccountID)
-
-		expectedCreatedAt, _ := time.Parse("2006-01-02 15:04:05", input.CreatedAt)
-		expectedUpdatedAt, _ := time.Parse("2006-01-02 15:04:05", input.UpdatedAt)
-
-		assert.Equal(t, expectedCreatedAt, invoice.CreatedAt)
-		assert.Equal(t, expectedUpdatedAt, invoice.UpdatedAt)
-	})
-
-	t.Run("should return nil for unsupported type", func(t *testing.T) {
-		invoice := ToInvoiceDomain("unsupported")
-		assert.Nil(t, invoice)
-	})
-
-	t.Run("should return nil when dto is nil", func(t *testing.T) {
-		invoice := ToInvoiceDomain(nil)
-		assert.Nil(t, invoice)
+		result := ToInvoiceDomain(input, "acc123")
+		assert.Nil(t, result)
 	})
 }

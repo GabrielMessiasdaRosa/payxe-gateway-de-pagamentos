@@ -42,3 +42,10 @@ func NewCreditCard(number, cvv, cardHolderName string, expirationMonth, expirati
 		CardHolderName:  cardHolderName,
 	}, nil
 }
+
+func (c *CreditCard) GetLastDigits() string {
+	if len(c.Number) < 4 {
+		return c.Number
+	}
+	return c.Number[len(c.Number)-4:]
+}

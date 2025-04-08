@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain/domainEntities"
+	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain/valueObjects"
 )
 
 func FromInvoice(invoice *domainEntities.InvoiceDomain) *InvoiceOutputDTO {
@@ -12,7 +13,7 @@ func FromInvoice(invoice *domainEntities.InvoiceDomain) *InvoiceOutputDTO {
 		panic("Invoice is nil")
 	}
 
-	output := InvoiceOutputDTO{
+	output := &InvoiceOutputDTO{
 		ID:          invoice.ID,
 		Amount:      invoice.Amount,
 		Description: invoice.Description,
@@ -21,47 +22,61 @@ func FromInvoice(invoice *domainEntities.InvoiceDomain) *InvoiceOutputDTO {
 		CreatedAt:   invoice.CreatedAt.Format("2006-01-02 15:04:05"),
 		UpdatedAt:   invoice.UpdatedAt.Format("2006-01-02 15:04:05"),
 	}
-	return &output
+	return output
 }
 
-func ToInvoiceDomain(dto interface{}) *domainEntities.InvoiceDomain {
-	if dto == nil {
-		return nil
-	}
-
-	var invoice *domainEntities.InvoiceDomain
-
+func ToInvoiceDomain(dto any, accountID string) *domainEntities.InvoiceDomain {
+	invoice := &domainEntities.InvoiceDomain{}
+	fmt.Println("DTO:", dto)
+	fmt.Println("invoice:", invoice)
 	switch v := dto.(type) {
 	case CreateInvoiceInputDTO:
-		invoice = &domainEntities.InvoiceDomain{
-			Amount:      v.Amount,
-			Description: v.Description,
-			AccountID:   v.AccountID,
+		card, err := valueObjects.NewCreditCard(
+			v.CardNumber,
+			v.CVV,
+			v.CardHolderName,
+			v.ExpirationMonth,
+			v.ExpirationYear,
+		)
+
+		if err != nil {
+			fmt.Println("Error creating credit card:", err)
+			return nil
 		}
+
+		invoice, err = domainEntities.NewInvoice(
+			accountID,
+			v.Amount,
+			v.Description,
+			v.PaymentType,
+			card,
+		)
+		fmt.Println("Invoice:", invoice)
+		if err != nil {
+			fmt.Println("Error creating invoice:", err)
+			return nil
+		}
+		invoice.CardLastDigits = card.GetLastDigits()
+		return invoice
 	case UpdateInvoiceInputDTO:
-		invoice = &domainEntities.InvoiceDomain{
-			ID:          v.ID,
-			Amount:      v.Amount,
-			Description: v.Description,
-			Status:      domainEntities.Status(v.Status),
-			AccountID:   v.AccountID,
-		}
+		invoice.ID = v.ID
+		invoice.Amount = v.Amount
+		invoice.Description = v.Description
+		invoice.Status = domainEntities.Status(v.Status)
+		invoice.AccountID = accountID
+		return invoice
 	case InvoiceOutputDTO:
-		createdAt, _ := time.Parse("2006-01-02 15:04:05", v.CreatedAt)
-		updatedAt, _ := time.Parse("2006-01-02 15:04:05", v.UpdatedAt)
-		invoice = &domainEntities.InvoiceDomain{
-			ID:          v.ID,
-			Amount:      v.Amount,
-			Description: v.Description,
-			Status:      domainEntities.Status(v.Status),
-			AccountID:   v.AccountID,
-			CreatedAt:   createdAt,
-			UpdatedAt:   updatedAt,
-		}
+		invoice.ID = v.ID
+		invoice.Amount = v.Amount
+		invoice.Description = v.Description
+		invoice.Status = domainEntities.Status(v.Status)
+		invoice.AccountID = v.AccountID
+		invoice.CreatedAt, _ = time.Parse("2006-01-02 15:04:05", v.CreatedAt)
+		invoice.UpdatedAt, _ = time.Parse("2006-01-02 15:04:05", v.UpdatedAt)
+		return invoice
 	default:
 		fmt.Printf("Unsupported type: %T\n", v)
 		return nil
 	}
 
-	return invoice
 }
