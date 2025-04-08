@@ -27,12 +27,12 @@ func (m *MockInvoiceDomainRepository) FindByID(id string) (*domainEntities.Invoi
 	return args.Get(0).(*domainEntities.InvoiceDomain), args.Error(1)
 }
 
-func (m *MockInvoiceDomainRepository) FindByReference(reference string) (*domainEntities.InvoiceDomain, error) {
-	args := m.Called(reference)
+func (m *MockInvoiceDomainRepository) FindByAccountID(accountID string) ([]*domainEntities.InvoiceDomain, error) {
+	args := m.Called(accountID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domainEntities.InvoiceDomain), args.Error(1)
+	return args.Get(0).([]*domainEntities.InvoiceDomain), args.Error(1)
 }
 
 func (m *MockInvoiceDomainRepository) UpdateStatus(invoice *domainEntities.InvoiceDomain) error {
@@ -74,6 +74,26 @@ func TestMockInvoiceDomainRepository_FindByID(t *testing.T) {
 	mockRepo = new(MockInvoiceDomainRepository)
 	mockRepo.On("FindByID", "456").Return(nil, errors.New("invoice not found"))
 	result, err = mockRepo.FindByID("456")
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestMockInvoiceDomainRepository_FindByAccountId(t *testing.T) {
+	mockRepo := new(MockInvoiceDomainRepository)
+	invoice := &domainEntities.InvoiceDomain{ID: "123", AccountID: "456"}
+
+	// Test success case
+	mockRepo.On("FindByAccountID", "456").Return([]*domainEntities.InvoiceDomain{invoice}, nil)
+	result, err := mockRepo.FindByAccountID("456")
+	assert.NoError(t, err)
+	assert.Equal(t, []*domainEntities.InvoiceDomain{invoice}, result)
+	mockRepo.AssertExpectations(t)
+
+	// Test not found case
+	mockRepo = new(MockInvoiceDomainRepository)
+	mockRepo.On("FindByAccountID", "789").Return(nil, errors.New("no invoices found"))
+	result, err = mockRepo.FindByAccountID("789")
 	assert.Error(t, err)
 	assert.Nil(t, result)
 	mockRepo.AssertExpectations(t)

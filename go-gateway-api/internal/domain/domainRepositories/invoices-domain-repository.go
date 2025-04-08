@@ -5,5 +5,6 @@ import "github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-a
 type InvoiceDomainRepository interface {
 	CreateInvoice(invoice *domainEntities.InvoiceDomain) error
 	FindByID(id string) (*domainEntities.InvoiceDomain, error)
+	FindByAccountID(accountID string) ([]*domainEntities.InvoiceDomain, error)
 	UpdateStatus(invoice *domainEntities.InvoiceDomain) error
 }
