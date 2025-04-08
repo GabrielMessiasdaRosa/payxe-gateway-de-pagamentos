@@ -16,7 +16,7 @@ func NewAccountRepository(db *sql.DB) *AccountRepository {
 	}
 }
 func (r *AccountRepository) CreateAccount(account *domainEntities.AccountDomain) error {
-	stmt, err := r.db.Prepare("INSERT INTO accounts (id, name, email, api_key, balance, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
+	stmt, err := r.db.Prepare("INSERT INTO accounts (id, name, email, api_key, balance, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)")
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func (r *AccountRepository) CreateAccount(account *domainEntities.AccountDomain)
 }
 
 func (r *AccountRepository) FindByID(id string) (*domainEntities.AccountDomain, error) {
-	stmt, err := r.db.Prepare("SELECT id, name, email, api_key, balance, created_at, updated_at FROM accounts WHERE id = ?")
+	stmt, err := r.db.Prepare("SELECT id, name, email, api_key, balance, created_at, updated_at FROM accounts WHERE id = $1")
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (r *AccountRepository) FindByID(id string) (*domainEntities.AccountDomain, 
 }
 
 func (r *AccountRepository) FindByAPIKey(apiKey string) (*domainEntities.AccountDomain, error) {
-	stmt, err := r.db.Prepare("SELECT id, name, email, api_key, balance, created_at, updated_at FROM accounts WHERE api_key = ?")
+	stmt, err := r.db.Prepare("SELECT id, name, email, api_key, balance, created_at, updated_at FROM accounts WHERE api_key = $1")
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,6 @@ func (r *AccountRepository) FindByAPIKey(apiKey string) (*domainEntities.Account
 }
 
 func (r *AccountRepository) UpdateBalance(account *domainEntities.AccountDomain) error {
-
 	tx, err := r.db.Begin()
 	if err != nil {
 		return err
@@ -67,7 +66,7 @@ func (r *AccountRepository) UpdateBalance(account *domainEntities.AccountDomain)
 	defer tx.Rollback()
 
 	var currentBalance float64
-	err = tx.QueryRow(("SELECT balance FROM accounts WHERE id = ? FOR UPDATE"), account.ID).Scan(&currentBalance)
+	err = tx.QueryRow("SELECT balance FROM accounts WHERE id = $1 FOR UPDATE", account.ID).Scan(&currentBalance)
 	if err == sql.ErrNoRows {
 		return nil
 	}
@@ -75,7 +74,7 @@ func (r *AccountRepository) UpdateBalance(account *domainEntities.AccountDomain)
 		return err
 	}
 
-	_, err = tx.Exec("UPDATE accounts SET balance = ?, updated_at = ? WHERE id = ?", currentBalance+account.Balance, account.UpdatedAt, account.ID)
+	_, err = tx.Exec("UPDATE accounts SET balance = $1, updated_at = $2 WHERE id = $3", currentBalance+account.Balance, account.UpdatedAt, account.ID)
 	if err != nil {
 		return err
 	}

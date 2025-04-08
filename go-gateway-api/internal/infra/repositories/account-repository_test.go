@@ -59,7 +59,7 @@ func TestAccountRepository_FindByID(t *testing.T) {
 	rows := sqlmock.NewRows([]string{"id", "name", "email", "api_key", "balance", "created_at", "updated_at"}).
 		AddRow(account.ID, account.Name, account.Email, account.APIKey, account.Balance, account.CreatedAt, account.UpdatedAt)
 
-	mock.ExpectPrepare("SELECT id, name, email, api_key, balance, created_at, updated_at FROM accounts WHERE id = ?").
+	mock.ExpectPrepare("SELECT id, name, email, api_key, balance, created_at, updated_at FROM accounts WHERE id = \\$1").
 		ExpectQuery().
 		WithArgs(account.ID).
 		WillReturnRows(rows)
@@ -91,7 +91,7 @@ func TestAccountRepository_FindByAPIKey(t *testing.T) {
 	rows := sqlmock.NewRows([]string{"id", "name", "email", "api_key", "balance", "created_at", "updated_at"}).
 		AddRow(account.ID, account.Name, account.Email, account.APIKey, account.Balance, account.CreatedAt, account.UpdatedAt)
 
-	mock.ExpectPrepare("SELECT id, name, email, api_key, balance, created_at, updated_at FROM accounts WHERE api_key = ?").
+	mock.ExpectPrepare("SELECT id, name, email, api_key, balance, created_at, updated_at FROM accounts WHERE api_key = \\$1").
 		ExpectQuery().
 		WithArgs(account.APIKey).
 		WillReturnRows(rows)
@@ -120,11 +120,11 @@ func TestAccountRepository_UpdateBalance(t *testing.T) {
 
 	mock.ExpectBegin()
 
-	mock.ExpectQuery("SELECT balance FROM accounts WHERE id = \\? FOR UPDATE").
+	mock.ExpectQuery("SELECT balance FROM accounts WHERE id = \\$1 FOR UPDATE").
 		WithArgs(account.ID).
 		WillReturnRows(sqlmock.NewRows([]string{"balance"}).AddRow(currentBalance))
 
-	mock.ExpectExec("UPDATE accounts SET balance = \\?, updated_at = \\? WHERE id = \\?").
+	mock.ExpectExec("UPDATE accounts SET balance = \\$1, updated_at = \\$2 WHERE id = \\$3").
 		WithArgs(currentBalance+account.Balance, account.UpdatedAt, account.ID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -151,7 +151,7 @@ func TestAccountRepository_UpdateBalance_NoRows(t *testing.T) {
 
 	mock.ExpectBegin()
 
-	mock.ExpectQuery("SELECT balance FROM accounts WHERE id = \\? FOR UPDATE").
+	mock.ExpectQuery("SELECT balance FROM accounts WHERE id = \\$1 FOR UPDATE").
 		WithArgs(account.ID).
 		WillReturnError(sql.ErrNoRows)
 
@@ -178,7 +178,7 @@ func TestAccountRepository_UpdateBalance_QueryError(t *testing.T) {
 
 	mock.ExpectBegin()
 
-	mock.ExpectQuery("SELECT balance FROM accounts WHERE id = \\? FOR UPDATE").
+	mock.ExpectQuery("SELECT balance FROM accounts WHERE id = \\$1 FOR UPDATE").
 		WithArgs(account.ID).
 		WillReturnError(sql.ErrConnDone)
 
@@ -207,11 +207,11 @@ func TestAccountRepository_UpdateBalance_ExecError(t *testing.T) {
 
 	mock.ExpectBegin()
 
-	mock.ExpectQuery("SELECT balance FROM accounts WHERE id = \\? FOR UPDATE").
+	mock.ExpectQuery("SELECT balance FROM accounts WHERE id = \\$1 FOR UPDATE").
 		WithArgs(account.ID).
 		WillReturnRows(sqlmock.NewRows([]string{"balance"}).AddRow(currentBalance))
 
-	mock.ExpectExec("UPDATE accounts SET balance = \\?, updated_at = \\? WHERE id = \\?").
+	mock.ExpectExec("UPDATE accounts SET balance = \\$1, updated_at = \\$2 WHERE id = \\$3").
 		WithArgs(currentBalance+account.Balance, account.UpdatedAt, account.ID).
 		WillReturnError(sql.ErrConnDone)
 
@@ -240,11 +240,11 @@ func TestAccountRepository_UpdateBalance_CommitError(t *testing.T) {
 
 	mock.ExpectBegin()
 
-	mock.ExpectQuery("SELECT balance FROM accounts WHERE id = \\? FOR UPDATE").
+	mock.ExpectQuery("SELECT balance FROM accounts WHERE id = \\$1 FOR UPDATE").
 		WithArgs(account.ID).
 		WillReturnRows(sqlmock.NewRows([]string{"balance"}).AddRow(currentBalance))
 
-	mock.ExpectExec("UPDATE accounts SET balance = \\?, updated_at = \\? WHERE id = \\?").
+	mock.ExpectExec("UPDATE accounts SET balance = \\$1, updated_at = \\$2 WHERE id = \\$3").
 		WithArgs(currentBalance+account.Balance, account.UpdatedAt, account.ID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
