@@ -1,8 +1,6 @@
 package service
 
 import (
-	"fmt"
-
 	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/application/dto"
 	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain/domainEntities"
 	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain/domainRepositories"
@@ -54,14 +52,13 @@ func (accService *AccountService) FindByID(id string) (*dto.AccountOutputDTO, er
 }
 
 func (accService *AccountService) UpdateBalance(acc *dto.UpdateAccountInputDTO) error {
-	fmt.Printf("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW %v\n", acc)
 	account, err := accService.accountRepository.FindByID(acc.ID)
-	fmt.Printf("Account ID: %v\n", account)
 	if err != nil {
 		return err
 	}
 	if account == nil {
 		return domainEntities.ErrAccountNotFound
 	}
+	account.Balance = acc.Balance
 	return accService.accountRepository.UpdateBalance(account)
 }

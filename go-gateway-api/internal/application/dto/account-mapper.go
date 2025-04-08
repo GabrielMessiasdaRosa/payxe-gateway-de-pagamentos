@@ -7,7 +7,6 @@ import (
 )
 
 func FromAccount(account *domainEntities.AccountDomain) *AccountOutputDTO {
-	fmt.Printf("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX %v\n", account)
 	if account == nil {
 		panic("Account is nil")
 	}
@@ -24,7 +23,6 @@ func FromAccount(account *domainEntities.AccountDomain) *AccountOutputDTO {
 
 func ToAccountDomain(dto interface{}) *domainEntities.AccountDomain {
 	account := &domainEntities.AccountDomain{}
-	fmt.Printf("Account ID: %v\n", account.ID)
 	if dto == nil {
 		fmt.Println("DTO is nil")
 		return nil

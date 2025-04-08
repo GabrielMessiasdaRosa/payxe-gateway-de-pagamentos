@@ -124,4 +124,68 @@ func TestUpdateBalance(t *testing.T) {
 	if err == nil {
 		t.Errorf("expected error when updating balance for non-existent account")
 	}
+
+	t.Run("should return error when account not found", func(t *testing.T) {
+		// Arrange
+		repo := mockRepositories.NewInMemoryAccountRepository()
+		accService := service.NewAccountService(repo)
+
+		input := &dto.UpdateAccountInputDTO{
+			ID:      "non-existent-id",
+			Balance: 100.0,
+		}
+
+		// Act
+		err := accService.UpdateBalance(input)
+
+		// Assert
+		if err == nil {
+			t.Errorf("expected error, got nil")
+		}
+	})
+
+	t.Run("should update balance from 100 to 200 successfully", func(t *testing.T) {
+		// Arrange
+		repo := mockRepositories.NewInMemoryAccountRepository()
+		accService := service.NewAccountService(repo)
+		
+		createInput := &dto.CreateAccountInputDTO{
+			Name:  "Balance Test",
+			Email: "balance@example.com",
+		}
+		created, err := accService.CreateAccount(createInput)
+		if err != nil {
+			t.Fatalf("error creating account: %v", err)
+		}
+		
+		// Set initial balance to 100
+		updateInput := &dto.UpdateAccountInputDTO{
+			ID:      created.ID,
+			Balance: 100.0,
+		}
+		err = accService.UpdateBalance(updateInput)
+		if err != nil {
+			t.Fatalf("failed to set initial balance: %v", err)
+		}
+		
+		// Act - Update balance to 200
+		updateInput.Balance = 200.0
+		err = accService.UpdateBalance(updateInput)
+		
+		// Assert
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		
+		// Verify the balance was updated
+		account, err := accService.FindByID(created.ID)
+		if err != nil {
+			t.Fatalf("failed to retrieve account: %v", err)
+		}
+		
+		if account.Balance != 200.0 {
+			t.Errorf("expected balance 200.0, got %f", account.Balance)
+		}
+	})
 }
+
