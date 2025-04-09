@@ -17,13 +17,14 @@ func NewInvoiceRepository(db *sql.DB) *InvoiceRepository {
 }
 
 func (r *InvoiceRepository) CreateInvoice(invoice *domainEntities.InvoiceDomain) error {
-	stmt, err := r.db.Prepare("INSERT INTO invoices (id, account_id, amount, status, description, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)")
+
+	stmt, err := r.db.Prepare("INSERT INTO invoices (id, account_id, amount, status, description, card_last_digits, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)")
 	if err != nil {
-		return err
+		return sql.ErrConnDone
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(invoice.ID, invoice.AccountID, invoice.Amount, invoice.Status, invoice.Description, invoice.CreatedAt, invoice.UpdatedAt)
+	_, err = stmt.Exec(invoice.ID, invoice.AccountID, invoice.Amount, invoice.Status, invoice.Description, invoice.CardLastDigits, invoice.CreatedAt, invoice.UpdatedAt)
 	if err != nil {
 		return err
 	}

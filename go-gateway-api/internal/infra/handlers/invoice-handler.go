@@ -7,6 +7,7 @@ import (
 
 	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/application/dto"
 	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/application/service"
+	"github.com/go-chi/chi/v5"
 )
 
 type InvoiceHandler struct {
@@ -43,15 +44,9 @@ func (h *InvoiceHandler) Create(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(invoice)
 }
 
-func (h *InvoiceHandler) GetByAccountID(w http.ResponseWriter, r *http.Request) {
+func (h *InvoiceHandler) GetByAccountApiKey(w http.ResponseWriter, r *http.Request) {
 	if h.InvoiceService == nil {
 		http.Error(w, "Invoice service is not initialized", http.StatusInternalServerError)
-		return
-	}
-
-	accountID := r.URL.Query().Get("account_id")
-	if accountID == "" {
-		http.Error(w, "Account ID is required", http.StatusBadRequest)
 		return
 	}
 
@@ -61,7 +56,13 @@ func (h *InvoiceHandler) GetByAccountID(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	invoices, err := h.InvoiceService.ListInvoicesByAccount(accountID)
+	account, err := h.InvoiceService.AccountService.FindByAPIKey(apiKey)
+	if err != nil {
+		http.Error(w, "Invalid API key", http.StatusUnauthorized)
+		return
+	}
+
+	invoices, err := h.InvoiceService.ListInvoicesByAccount(account.ID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -78,7 +79,7 @@ func (h *InvoiceHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	invoiceID := r.URL.Query().Get("id")
+	invoiceID := chi.URLParam(r, "id")
 	if invoiceID == "" {
 		http.Error(w, "Invoice ID is required", http.StatusBadRequest)
 		return

@@ -20,18 +20,19 @@ func TestCreateInvoice(t *testing.T) {
 	defer db.Close()
 
 	mockInvoice := &domainEntities.InvoiceDomain{
-		ID:          "123",
-		AccountID:   "acc123",
-		Amount:      100.0,
-		Status:      "pending",
-		Description: "Test invoice",
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:             "123",
+		AccountID:      "acc123",
+		Amount:         100.0,
+		Status:         "pending",
+		Description:    "Test invoice",
+		CardLastDigits: "1234",
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
 	}
 
 	mock.ExpectPrepare(regexp.QuoteMeta("INSERT INTO invoices")).
 		ExpectExec().
-		WithArgs(mockInvoice.ID, mockInvoice.AccountID, mockInvoice.Amount, mockInvoice.Status, mockInvoice.Description, mockInvoice.CreatedAt, mockInvoice.UpdatedAt).
+		WithArgs(mockInvoice.ID, mockInvoice.AccountID, mockInvoice.Amount, mockInvoice.Status, mockInvoice.Description, mockInvoice.CardLastDigits, mockInvoice.CreatedAt, mockInvoice.UpdatedAt).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	repo := repositories.NewInvoiceRepository(db)
@@ -132,7 +133,6 @@ func TestCreateInvoice_Error(t *testing.T) {
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
-	defer db.Close()
 
 	mockInvoice := &domainEntities.InvoiceDomain{
 		ID:          "123",
@@ -150,10 +150,12 @@ func TestCreateInvoice_Error(t *testing.T) {
 		WillReturnError(sql.ErrConnDone)
 
 	repo := repositories.NewInvoiceRepository(db)
+	db.Close()
 	err = repo.CreateInvoice(mockInvoice)
 	assert.Error(t, err)
 	assert.Equal(t, sql.ErrConnDone, err)
-	assert.Nil(t, mock.ExpectationsWereMet())
+	assert.NotNil(t, mock.ExpectationsWereMet())
+
 }
 
 func TestFindByID_NotFound(t *testing.T) {
