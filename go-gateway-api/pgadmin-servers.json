@@ -1,0 +1,18 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Gateway PostgreSQL",
+      "Group": "Servers",
+      "Host": "postgres-db",
+      "Port": 5432,
+      "MaintenanceDB": "gateway",
+      "Username": "postgres",
+      "Password": "postgres",
+      "SSLMode": "prefer",
+      "SSLCert": "",
+      "SSLKey": "",
+      "SSLRootCert": "",
+      "SSLCompression": 0
+    }
+  }
+}
