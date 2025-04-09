@@ -5,6 +5,7 @@ import (
 
 	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/application/service"
 	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/infra/handlers"
+	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/infra/middleware"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -34,13 +35,18 @@ func NewServer(accountService *service.AccountService, invoiceService *service.I
 
 func (s *Server) SetupRoutes() {
 	accountHandler := handlers.NewAccountHandler(s.accountService)
+	invoiceHandler := handlers.NewInvoiceHandler(s.invoiceService)
+	authMiddleware := middleware.NewAuthMiddleware(s.accountService)
+
 	s.router.Post("/accounts", accountHandler.Create)
 	s.router.Get("/accounts", accountHandler.Get)
 
-	invoiceHandler := handlers.NewInvoiceHandler(s.invoiceService)
-	s.router.Post("/invoices", invoiceHandler.Create)
-	s.router.Get("/invoices", invoiceHandler.GetByAccountID)
-	s.router.Get("/invoices/{id}", invoiceHandler.GetByID)
+	s.router.Group(func(r chi.Router) {
+		r.Use(authMiddleware.Authenticate)
+		s.router.Post("/invoices", invoiceHandler.Create)
+		s.router.Get("/invoices", invoiceHandler.GetByAccountID)
+		s.router.Get("/invoices/{id}", invoiceHandler.GetByID)
+	})
 }
 
 func (s *Server) Start() error {

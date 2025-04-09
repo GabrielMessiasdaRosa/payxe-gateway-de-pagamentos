@@ -1,8 +1,6 @@
 package mockRepositories
 
 import (
-	"errors"
-
 	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain/domainEntities"
 )
 
@@ -27,7 +25,7 @@ func (repo *InMemoryAccountRepository) FindByID(id string) (*domainEntities.Acco
 			return acc, nil
 		}
 	}
-	return nil, errors.New("account not found")
+	return nil, domainEntities.ErrAccountNotFound
 }
 
 func (repo *InMemoryAccountRepository) FindByAPIKey(apiKey string) (*domainEntities.AccountDomain, error) {
@@ -36,7 +34,7 @@ func (repo *InMemoryAccountRepository) FindByAPIKey(apiKey string) (*domainEntit
 			return acc, nil
 		}
 	}
-	return nil, errors.New("account not found")
+	return nil, domainEntities.ErrAccountNotFound
 }
 
 func (repo *InMemoryAccountRepository) UpdateBalance(account *domainEntities.AccountDomain) error {
@@ -46,5 +44,5 @@ func (repo *InMemoryAccountRepository) UpdateBalance(account *domainEntities.Acc
 			return nil
 		}
 	}
-	return errors.New("account not found")
+	return domainEntities.ErrAccountNotFound
 }
