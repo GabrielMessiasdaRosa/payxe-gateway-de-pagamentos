@@ -39,7 +39,7 @@ func NewInvoice(accountID string, amount float64, description string, paymentTyp
 
 	cardLastDigits := ""
 	if card != nil {
-		cardLastDigits = card.Number[len(card.Number)-4:]
+		cardLastDigits = card.GetLastDigits()
 	}
 
 	invoice := &InvoiceDomain{

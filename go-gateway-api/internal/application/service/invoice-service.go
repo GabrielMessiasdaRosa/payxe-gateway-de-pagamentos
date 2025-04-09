@@ -1,54 +1,36 @@
-// filepath: /home/gmrosa/Desktop/Estudo/imersoes/payxe-gateway-de-pagamentos/go-gateway-api/internal/application/service/invoice-service.go
 package service
 
 import (
 	"fmt"
 
 	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/application/dto"
-	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain/domainEntities"
 	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain/domainRepositories"
-	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain/valueObjects"
 )
 
 type InvoiceService struct {
-	invoiceRepository domainRepositories.InvoiceDomainRepository
-	accountRepository domainRepositories.AccountDomainRepository
+	InvoiceRepository domainRepositories.InvoiceDomainRepository
+	AccountService    *AccountService
 }
 
-func NewInvoiceService(invoiceRepository domainRepositories.InvoiceDomainRepository, accountRepository domainRepositories.AccountDomainRepository) *InvoiceService {
+func NewInvoiceService(invoiceRepository domainRepositories.InvoiceDomainRepository, accountService *AccountService) *InvoiceService {
 	return &InvoiceService{
-		invoiceRepository: invoiceRepository,
-		accountRepository: accountRepository,
+		InvoiceRepository: invoiceRepository,
+		AccountService:    accountService,
 	}
 }
 
-func (i *InvoiceService) CreateInvoice(newInvoice *dto.CreateInvoiceInputDTO) (*dto.InvoiceOutputDTO, error) {
+func (i *InvoiceService) CreateInvoice(newInvoice dto.CreateInvoiceInputDTO, apiKey string) (*dto.InvoiceOutputDTO, error) {
 	// Verify if account exists
-	account, err := i.accountRepository.FindByAPIKey(newInvoice.APIKey)
+	account, err := i.AccountService.FindByAPIKey(apiKey)
+	fmt.Println("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO:", account)
 	if err != nil {
 		return nil, fmt.Errorf("account not found: %w", err)
 	}
-	card, err := valueObjects.NewCreditCard(
-		newInvoice.CardNumber,
-		newInvoice.CVV,
-		newInvoice.CardHolderName,
-		newInvoice.ExpirationMonth,
-		newInvoice.ExpirationYear,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create credit card: %w", err)
+	newInvoiceDomain := dto.ToInvoiceDomain(newInvoice, account.ID)
+	if newInvoiceDomain == nil {
+		return nil, fmt.Errorf("failed to create invoice domain")
 	}
-	newInvoiceDomain, err := domainEntities.NewInvoice(
-		account.ID,
-		newInvoice.Amount,
-		newInvoice.Description,
-		newInvoice.PaymentType,
-		card,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create invoice: %w", err)
-	}
-	err = i.invoiceRepository.CreateInvoice(newInvoiceDomain)
+	err = i.InvoiceRepository.CreateInvoice(newInvoiceDomain)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save invoice: %w", err)
 	}
@@ -57,11 +39,19 @@ func (i *InvoiceService) CreateInvoice(newInvoice *dto.CreateInvoiceInputDTO) (*
 	return output, nil
 }
 
-func (i *InvoiceService) FindInvoiceByID(id string) (*dto.InvoiceOutputDTO, error) {
-	invoice, err := i.invoiceRepository.FindByID(id)
+func (i *InvoiceService) FindInvoiceByID(id string, apiKey string) (*dto.InvoiceOutputDTO, error) {
+	invoice, err := i.InvoiceRepository.FindByID(id)
 	fmt.Println("Invoice:", invoice)
 	if err != nil {
 		return nil, err
+	}
+
+	account, err := i.AccountService.FindByAPIKey(apiKey)
+	if err != nil {
+		return nil, fmt.Errorf("account not found: %w", err)
+	}
+	if invoice.AccountID != account.ID {
+		return nil, fmt.Errorf("invoice does not belong to the account")
 	}
 
 	output := dto.FromInvoice(invoice)
@@ -70,13 +60,13 @@ func (i *InvoiceService) FindInvoiceByID(id string) (*dto.InvoiceOutputDTO, erro
 
 func (i *InvoiceService) ListInvoicesByAccount(accountID string) ([]*dto.InvoiceOutputDTO, error) {
 	// Verify if account exists
-	_, err := i.accountRepository.FindByID(accountID)
+	_, err := i.AccountService.FindByID(accountID)
 	if err != nil {
 		return nil, fmt.Errorf("account not found: %w", err)
 	}
 
 	// Get invoices
-	invoices, err := i.invoiceRepository.FindByAccountID(accountID)
+	invoices, err := i.InvoiceRepository.FindByAccountID(accountID)
 	if err != nil {
 		return nil, err
 	}

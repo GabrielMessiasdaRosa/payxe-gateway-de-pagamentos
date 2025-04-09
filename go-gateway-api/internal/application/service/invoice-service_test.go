@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/application/dto"
@@ -13,10 +14,10 @@ func TestInvoiceService(t *testing.T) {
 		// Arrange
 		repo := mockRepositories.NewInMemoryInvoiceRepository()
 		accRepo := mockRepositories.NewInMemoryAccountRepository()
-		invoiceService := service.NewInvoiceService(repo, accRepo)
+		accService := service.NewAccountService(accRepo)
+		invoiceService := service.NewInvoiceService(repo, accService)
 
 		// Create account first
-		accService := service.NewAccountService(accRepo)
 		accountInput := &dto.CreateAccountInputDTO{
 			Name:  "John Doe",
 			Email: "john@example.com",
@@ -26,7 +27,7 @@ func TestInvoiceService(t *testing.T) {
 			t.Fatalf("failed to create test account: %v", err)
 		}
 
-		input := &dto.CreateInvoiceInputDTO{
+		input := dto.CreateInvoiceInputDTO{
 			APIKey:          account.APIKey,
 			Amount:          100.0,
 			Description:     "Test invoice",
@@ -39,8 +40,8 @@ func TestInvoiceService(t *testing.T) {
 		}
 
 		// Act
-		invoice, err := invoiceService.CreateInvoice(input)
-
+		invoice, err := invoiceService.CreateInvoice(input, account.APIKey)
+		fmt.Println("ITS ALAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIVE !:", invoice)
 		// Assert
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
@@ -66,9 +67,10 @@ func TestInvoiceService(t *testing.T) {
 		// Arrange
 		repo := mockRepositories.NewInMemoryInvoiceRepository()
 		accRepo := mockRepositories.NewInMemoryAccountRepository()
-		invoiceService := service.NewInvoiceService(repo, accRepo)
+		accService := service.NewAccountService(accRepo)
+		invoiceService := service.NewInvoiceService(repo, accService)
 
-		input := &dto.CreateInvoiceInputDTO{
+		input := dto.CreateInvoiceInputDTO{
 			APIKey:          "invalid-api-key",
 			Amount:          100.0,
 			Description:     "Test invoice",
@@ -81,7 +83,7 @@ func TestInvoiceService(t *testing.T) {
 		}
 
 		// Act
-		_, err := invoiceService.CreateInvoice(input)
+		_, err := invoiceService.CreateInvoice(input, input.APIKey)
 
 		// Assert
 		if err == nil {
@@ -93,10 +95,8 @@ func TestInvoiceService(t *testing.T) {
 		// Arrange
 		repo := mockRepositories.NewInMemoryInvoiceRepository()
 		accRepo := mockRepositories.NewInMemoryAccountRepository()
-		invoiceService := service.NewInvoiceService(repo, accRepo)
-
-		// Create account first
 		accService := service.NewAccountService(accRepo)
+		invoiceService := service.NewInvoiceService(repo, accService)
 		accountInput := &dto.CreateAccountInputDTO{
 			Name:  "Alice",
 			Email: "alice@example.com",
@@ -104,7 +104,7 @@ func TestInvoiceService(t *testing.T) {
 		account, _ := accService.CreateAccount(accountInput)
 
 		// Create invoice
-		input := &dto.CreateInvoiceInputDTO{
+		input := dto.CreateInvoiceInputDTO{
 			APIKey:          account.APIKey,
 			Amount:          150.0,
 			Description:     "Test invoice",
@@ -115,13 +115,13 @@ func TestInvoiceService(t *testing.T) {
 			ExpirationYear:  2030,
 			CardHolderName:  "Alice",
 		}
-		created, err := invoiceService.CreateInvoice(input)
+		created, err := invoiceService.CreateInvoice(input, account.APIKey)
 		if err != nil {
 			t.Fatalf("failed to create test invoice: %v", err)
 		}
 
 		// Act
-		found, err := invoiceService.FindInvoiceByID(created.ID)
+		found, err := invoiceService.FindInvoiceByID(created.ID, account.APIKey)
 
 		// Assert
 		if err != nil {
@@ -139,10 +139,11 @@ func TestInvoiceService(t *testing.T) {
 		// Arrange
 		repo := mockRepositories.NewInMemoryInvoiceRepository()
 		accRepo := mockRepositories.NewInMemoryAccountRepository()
-		invoiceService := service.NewInvoiceService(repo, accRepo)
+		accService := service.NewAccountService(accRepo)
+		invoiceService := service.NewInvoiceService(repo, accService)
 
 		// Act
-		_, err := invoiceService.FindInvoiceByID("non-existent-id")
+		_, err := invoiceService.FindInvoiceByID("non-existent-id", "valid-api-key")
 
 		// Assert
 		if err == nil {
@@ -154,10 +155,8 @@ func TestInvoiceService(t *testing.T) {
 		// Arrange
 		repo := mockRepositories.NewInMemoryInvoiceRepository()
 		accRepo := mockRepositories.NewInMemoryAccountRepository()
-		invoiceService := service.NewInvoiceService(repo, accRepo)
-
-		// Create account first
 		accService := service.NewAccountService(accRepo)
+		invoiceService := service.NewInvoiceService(repo, accService)
 		accountInput := &dto.CreateAccountInputDTO{
 			Name:  "Bob",
 			Email: "bob@example.com",
@@ -166,7 +165,7 @@ func TestInvoiceService(t *testing.T) {
 
 		// Create multiple invoices
 		for i := 0; i < 3; i++ {
-			input := &dto.CreateInvoiceInputDTO{
+			input := dto.CreateInvoiceInputDTO{
 				APIKey:          account.APIKey,
 				Amount:          100.0 * float64(i+1),
 				Description:     "Test invoice",
@@ -177,7 +176,7 @@ func TestInvoiceService(t *testing.T) {
 				ExpirationYear:  2030,
 				CardHolderName:  "Bob",
 			}
-			_, _ = invoiceService.CreateInvoice(input)
+			_, _ = invoiceService.CreateInvoice(input, account.APIKey)
 		}
 
 		// Act

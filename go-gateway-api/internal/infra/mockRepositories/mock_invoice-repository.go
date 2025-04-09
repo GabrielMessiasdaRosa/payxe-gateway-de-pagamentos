@@ -2,7 +2,6 @@ package mockRepositories
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/domain/domainEntities"
 )
@@ -23,9 +22,6 @@ func (repo *InMemoryInvoiceRepository) CreateInvoice(invoice *domainEntities.Inv
 }
 
 func (repo *InMemoryInvoiceRepository) FindByID(id string) (*domainEntities.InvoiceDomain, error) {
-	fmt.Println("Finding invoice by ID:", id)
-	fmt.Println("Invoices in repository:", repo.invoices)
-	fmt.Println("Invoices in repository count:", len(repo.invoices))
 	for _, invoice := range repo.invoices {
 		if invoice.ID == id {
 			return invoice, nil
