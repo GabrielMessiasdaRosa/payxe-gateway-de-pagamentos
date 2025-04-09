@@ -27,10 +27,11 @@ func main() {
 
 	accountRepository := repositories.NewAccountRepository(pgDb)
 	accountService := service.NewAccountService(accountRepository)
-
+	invoiceRepository := repositories.NewInvoiceRepository(pgDb)
+	invoiceService := service.NewInvoiceService(invoiceRepository, accountService)
 	port := utils.GetEnv("PORT", "8080")
 	log.Printf("Server is running on port: %s", port)
-	srv := server.NewServer(accountService, port)
+	srv := server.NewServer(accountService, invoiceService, port)
 	srv.SetupRoutes()
 	if err := srv.Start(); err != nil {
 		log.Fatalf("Error starting server: %v", err)

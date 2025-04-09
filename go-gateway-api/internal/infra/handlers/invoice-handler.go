@@ -3,7 +3,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/application/dto"
@@ -35,7 +34,6 @@ func (h *InvoiceHandler) Create(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	apiKey := r.Header.Get("X-API-Key")
 	invoice, err := h.InvoiceService.CreateInvoice(input, apiKey)
-	fmt.Println("DIASUDHIASHDIASUIDSHDIASUD", invoice)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -45,7 +43,36 @@ func (h *InvoiceHandler) Create(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(invoice)
 }
 
-func (h *InvoiceHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (h *InvoiceHandler) GetByAccountID(w http.ResponseWriter, r *http.Request) {
+	if h.InvoiceService == nil {
+		http.Error(w, "Invoice service is not initialized", http.StatusInternalServerError)
+		return
+	}
+
+	accountID := r.URL.Query().Get("account_id")
+	if accountID == "" {
+		http.Error(w, "Account ID is required", http.StatusBadRequest)
+		return
+	}
+
+	apiKey := r.Header.Get("X-API-Key")
+	if apiKey == "" {
+		http.Error(w, "API key is required", http.StatusBadRequest)
+		return
+	}
+
+	invoices, err := h.InvoiceService.ListInvoicesByAccount(accountID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(invoices)
+}
+
+func (h *InvoiceHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	if h.InvoiceService == nil {
 		http.Error(w, "Invoice service is not initialized", http.StatusInternalServerError)
 		return

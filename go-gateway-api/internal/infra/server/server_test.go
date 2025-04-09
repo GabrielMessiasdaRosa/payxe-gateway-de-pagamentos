@@ -13,23 +13,26 @@ import (
 
 func TestNewServer(t *testing.T) {
 	accountService := &service.AccountService{}
+	invoiceService := &service.InvoiceService{}
 	port := "3000"
 
-	server := NewServer(accountService, port)
+	server := NewServer(accountService, invoiceService, port)
 
 	assert.NotNil(t, server)
 	assert.NotNil(t, server.router)
 	assert.NotNil(t, server.server)
 	assert.Equal(t, accountService, server.accountService)
+	assert.Equal(t, invoiceService, server.invoiceService)
 	assert.Equal(t, port, server.port)
 	assert.Equal(t, ":"+port, server.server.Addr)
 }
 
 func TestServer_SetupRoutes(t *testing.T) {
 	accountService := &service.AccountService{}
+	invoiceService := &service.InvoiceService{}
 	port := "3000"
 
-	server := NewServer(accountService, port)
+	server := NewServer(accountService, invoiceService, port)
 	server.SetupRoutes()
 
 	// Check if routes were registered by inspecting the router
@@ -47,7 +50,8 @@ func TestServer_Start(t *testing.T) {
 	listener.Close()
 
 	accountService := &service.AccountService{}
-	server := NewServer(accountService, port)
+	invoiceService := &service.InvoiceService{}
+	server := NewServer(accountService, invoiceService, port)
 	server.SetupRoutes()
 
 	// Start server in a goroutine since it blocks

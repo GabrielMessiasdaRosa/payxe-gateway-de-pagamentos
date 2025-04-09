@@ -27,10 +27,8 @@ func FromInvoice(invoice *domainEntities.InvoiceDomain) *InvoiceOutputDTO {
 
 func ToInvoiceDomain(dto interface{}, accountID string) *domainEntities.InvoiceDomain {
 	invoice := &domainEntities.InvoiceDomain{}
-	fmt.Println("DTO:", dto)
 	switch v := dto.(type) {
 	case CreateInvoiceInputDTO:
-		fmt.Println("VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV", v)
 		card, err := valueObjects.NewCreditCard(
 			v.CardNumber,
 			v.CVV,
@@ -51,7 +49,6 @@ func ToInvoiceDomain(dto interface{}, accountID string) *domainEntities.InvoiceD
 			v.PaymentType,
 			card,
 		)
-		fmt.Println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", invoice)
 		if err != nil {
 			fmt.Println("Error creating invoice:", err)
 			return nil

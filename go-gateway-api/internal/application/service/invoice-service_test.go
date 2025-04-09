@@ -1,7 +1,6 @@
 package service_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/GabrielMessiasdaRosa/payxe-gateway-de-pagamentos/go-gateway-api/internal/application/dto"
@@ -41,7 +40,6 @@ func TestInvoiceService(t *testing.T) {
 
 		// Act
 		invoice, err := invoiceService.CreateInvoice(input, account.APIKey)
-		fmt.Println("ITS ALAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIVE !:", invoice)
 		// Assert
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)

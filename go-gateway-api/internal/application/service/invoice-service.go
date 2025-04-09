@@ -22,7 +22,6 @@ func NewInvoiceService(invoiceRepository domainRepositories.InvoiceDomainReposit
 func (i *InvoiceService) CreateInvoice(newInvoice dto.CreateInvoiceInputDTO, apiKey string) (*dto.InvoiceOutputDTO, error) {
 	// Verify if account exists
 	account, err := i.AccountService.FindByAPIKey(apiKey)
-	fmt.Println("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO:", account)
 	if err != nil {
 		return nil, fmt.Errorf("account not found: %w", err)
 	}
@@ -41,7 +40,6 @@ func (i *InvoiceService) CreateInvoice(newInvoice dto.CreateInvoiceInputDTO, api
 
 func (i *InvoiceService) FindInvoiceByID(id string, apiKey string) (*dto.InvoiceOutputDTO, error) {
 	invoice, err := i.InvoiceRepository.FindByID(id)
-	fmt.Println("Invoice:", invoice)
 	if err != nil {
 		return nil, err
 	}
